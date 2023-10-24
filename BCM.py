@@ -30,15 +30,11 @@ def Check__Available_Serial_Ports():
                             print(", ",end="")
             print(" ]")
 
-def Read_Serial_Port(Data_Len):
+def Read_Serial_Port(Data_Lenth):
     
-    Serial_Value = ser.read(Data_Len)
-    Serial_Value_len = len(Serial_Value)
-    while Serial_Value_len <= 0 and Serial_Value_len < Data_Len:
-        Serial_Value = ser.read(Data_Len)
-        Serial_Value_len = len(Serial_Value) + Serial_Value_len
-        print("Waiting")
-    return Serial_Value
+    Value_readed = ser.read(Data_Lenth) #take care from max size of input buffer
+    # Value_readed_len = len(Value_readed)
+    return Value_readed
 
 print("Welcome To BCM")
 print("-------------------")
@@ -49,8 +45,6 @@ port_needed =input()
 
 try:
     ser = serial.Serial(port_needed, 115200 ,timeout=2)
-    # ser.open()
-    # ser.set_buffer_size(rx_size=10000,tx_size=10000)
 except:
     print("An exception occurred, The port may be used by another process")
     exit()
@@ -67,16 +61,12 @@ else:
 
 
 bytes_to_send=Open_Read_BinFile()
-# for i in bytes_to_send:
-#     print(i)
 
 datalen = ser.write(bytes_to_send)
 # x =Read_Serial_Port(datalen)
 
 print(datalen)
-# print(len(x))
 
-# ser.reset_input_buffer()
 
 ser.close()
 if ser.is_open:
