@@ -2,7 +2,7 @@ import serial
 import serial.tools.list_ports as ports 
 import os
 
-APP_NAME ="Application.bin"
+APP_NAME ="App.bin"
 global ser
 
 def CalulateBinFileLength():

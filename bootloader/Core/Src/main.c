@@ -20,6 +20,7 @@
 #include "main.h"
 #include "fatfs.h"
 #include "spi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -38,13 +39,21 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define app_size 4
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t data_received[app_size]={0};
+int flag=0;
 
+//uint64_t array_data[]
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+
+	flag =100;
+
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,12 +112,28 @@ int main(void)
   MX_GPIO_Init();
   MX_FATFS_Init();
   MX_SPI1_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
-  HAL_Delay(3000);
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
-  jump_to_application(0x8060000);
+//  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
+//  HAL_Delay(3000);
+//  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
+//  jump_to_application(0x8060000);
+
+  HAL_UART_Receive(&huart4, data_received, app_size,HAL_MAX_DELAY);
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  //int counter =0;
+  while (1)
+  {
+	  if(flag==100){
+		  flag=0;
+	  }
+  }
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
