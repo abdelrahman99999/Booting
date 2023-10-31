@@ -13,10 +13,11 @@ def Open_Read_BinFile():
     # print("size: "+ str(CalulateBinFileLength()))
     BinFile = open(APP_NAME, 'rb')
     bytes = BinFile.read()
+    BinFile.close()
     # print(len(bytes))
     return bytes
-
-def Check__Available_Serial_Ports():
+    
+def Check_Available_Serial_Ports():
     com_ports = list(ports.comports())
     if(len(com_ports) == 0):
             print("NO Available Serial Ports")
@@ -24,7 +25,7 @@ def Check__Available_Serial_Ports():
             print("[ ",end="")
             counter = -1
             for i in com_ports:
-                    counter+=1            
+                    counter+=1       
                     print(i.device,end="") # returns 'COMx' 
                     if(counter != (len(com_ports)-1)):
                             print(", ",end="")
@@ -36,10 +37,19 @@ def Read_Serial_Port(Data_Lenth):
     # Value_readed_len = len(Value_readed)
     return Value_readed
 
+def Write_Serial_Port(Data):
+    count =0
+    for i in bytes_to_send:
+        x=bytes(chr(i).encode())
+        ser.write(x)
+        count+=1
+    return count #return no of data send
+
+
 print("Welcome To BCM")
 print("-------------------")
 print("There Are The Available Serial Ports")
-Check__Available_Serial_Ports()
+Check_Available_Serial_Ports()
 print("Enter Needed Serial Port")
 port_needed =input()
 
@@ -55,18 +65,13 @@ else:
     print("Port Open Failed")
 
 
-
 # # ser.write(b"Hello world")
 # # x = ser.readline()
 
-
 bytes_to_send=Open_Read_BinFile()
 
-datalen = ser.write(bytes_to_send)
-# x =Read_Serial_Port(datalen)
-
-print(datalen)
-
+count = Write_Serial_Port(bytes_to_send)
+print("total no sent: ",count)
 
 ser.close()
 if ser.is_open:
