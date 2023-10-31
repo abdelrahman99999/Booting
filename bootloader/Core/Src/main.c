@@ -44,7 +44,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define app_size 4
+#define app_size 6476
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -190,8 +190,8 @@ int main(void)
 //    //We're done, so de-mount the drive
 //    fres =f_mount(NULL, "", 0);
 
-  /* USER CODE END 2 */
- HAL_UART_Receive(&huart4, data_received, app_size,HAL_MAX_DELAY);
+  HAL_UART_Receive_IT(&huart4, data_received, app_size);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -203,8 +203,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(flag==100){
-		  flag=0;
+	  if(flag ==100){
+		  flag =0;
 	  }
     /* USER CODE BEGIN 3 */
   }
