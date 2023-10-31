@@ -20,6 +20,7 @@
 #include "main.h"
 #include "fatfs.h"
 #include "spi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -43,13 +44,21 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define app_size 4
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t data_received[app_size]={0};
+int flag=0;
 
+//uint64_t array_data[]
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+
+	flag =100;
+
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,6 +117,7 @@ int main(void)
   MX_GPIO_Init();
   MX_FATFS_Init();
   MX_SPI1_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
 //  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
@@ -115,77 +125,87 @@ int main(void)
 //  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
 //  jump_to_application(0x8060000);
 
+
   //some variables for FatFs
-    FATFS FatFs; 	//Fatfs handle
-    FIL fil_old; 		//File handle
-    FIL fil_patch; 		//File handle
-    FIL fil_new; 		//File handle
-    FRESULT fres; //Result after operations
+//     FATFS FatFs; 	//Fatfs handle
+//     FIL fil_old; 		//File handle
+//     FIL fil_patch; 		//File handle
+//     FIL fil_new; 		//File handle
+//     FRESULT fres; //Result after operations
 
-    //Open the file system
-      fres = f_mount(&FatFs, "", 1); //1=mount now
-      if (fres != FR_OK) {
-    	  printf("error\n");
-      }
+//     //Open the file system
+//       fres = f_mount(&FatFs, "", 1); //1=mount now
+//       if (fres != FR_OK) {
+//     	  printf("error\n");
+//       }
 
-      //Now let's try to open file "old.txt"
-        fres = f_open(&fil_old, "app.bin", FA_READ);
-        if (fres != FR_OK) {
-      	  printf("error\n");
-        }
-    //Now let's try to open file "patch.txt"
- 	  fres = f_open(&fil_patch, "diff.patch", FA_READ);
- 	  if (fres != FR_OK) {
- 		  printf("error\n");
- 	  }
- 	  //Now let's try to open file "new.txt"
- 	 fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
- 	 if (fres != FR_OK) {
- 		 printf("error\n");
- 	 }
-     // janpatch_ctx contains buffers, and references to the file system functions
-     janpatch_ctx ctx = {
-         { (unsigned char*)malloc(1024), 1024 }, // source buffer
-         { (unsigned char*)malloc(1024), 1024 }, // patch buffer
-         { (unsigned char*)malloc(1024), 1024 }, // target buffer
-         &f_read,
-         &f_write,
-         &f_lseek
-     };
+//       //Now let's try to open file "old.txt"
+//         fres = f_open(&fil_old, "app.bin", FA_READ);
+//         if (fres != FR_OK) {
+//       	  printf("error\n");
+//         }
+//     //Now let's try to open file "patch.txt"
+//  	  fres = f_open(&fil_patch, "diff.patch", FA_READ);
+//  	  if (fres != FR_OK) {
+//  		  printf("error\n");
+//  	  }
+//  	  //Now let's try to open file "new.txt"
+//  	 fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
+//  	 if (fres != FR_OK) {
+//  		 printf("error\n");
+//  	 }
+//      // janpatch_ctx contains buffers, and references to the file system functions
+//      janpatch_ctx ctx = {
+//          { (unsigned char*)malloc(1024), 1024 }, // source buffer
+//          { (unsigned char*)malloc(1024), 1024 }, // patch buffer
+//          { (unsigned char*)malloc(1024), 1024 }, // target buffer
+//          &f_read,
+//          &f_write,
+//          &f_lseek
+//      };
 
-   //patching
-   int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
+//    //patching
+//    int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
 
-   fres = f_close(&fil_old);
-   fres = f_close(&fil_patch);
-   fres = f_close(&fil_new);
-   //successful patching
+//    fres = f_close(&fil_old);
+//    fres = f_close(&fil_patch);
+//    fres = f_close(&fil_new);
+//    //successful patching
 
-   if(res == 0){
- 	    char buffer[4];
- 	    int size;
- 	    fres = f_open(&fil_new, "reconstruct.bin", FA_READ);
- 	    // Reads line by line until the end
- 	    do
- 	    {
- 	       f_read(&fil_new, buffer, sizeof(buffer), &size);
- 	      // buffer now has the data ,can use and flash it
- 	      memset(buffer,0,sizeof(buffer));
- 	    }while(size !=0);
-   }
+//    if(res == 0){
+//  	    char buffer[4];
+//  	    int size;
+//  	    fres = f_open(&fil_new, "reconstruct.bin", FA_READ);
+//  	    // Reads line by line until the end
+//  	    do
+//  	    {
+//  	       f_read(&fil_new, buffer, sizeof(buffer), &size);
+//  	      // buffer now has the data ,can use and flash it
+//  	      memset(buffer,0,sizeof(buffer));
+//  	    }while(size !=0);
+//    }
 
-   //don't forget to close your file!
-   fres = f_close(&fil_new);
-   //We're done, so de-mount the drive
-   fres =f_mount(NULL, "", 0);
+//    //don't forget to close your file!
+//    fres = f_close(&fil_new);
+//    //We're done, so de-mount the drive
+//    fres =f_mount(NULL, "", 0);
+
   /* USER CODE END 2 */
+ HAL_UART_Receive(&huart4, data_received, app_size,HAL_MAX_DELAY);
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  //int counter =0;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  if(flag==100){
+		  flag=0;
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
