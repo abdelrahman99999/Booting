@@ -1,8 +1,10 @@
+import struct
 import serial
 import serial.tools.list_ports as ports 
 import os
+import json
 
-APP_NAME ="App.bin"
+APP_NAME ="application2.bin"
 global ser
 
 def CalulateBinFileLength():
@@ -10,12 +12,12 @@ def CalulateBinFileLength():
     return BinFileLength
 
 def Open_Read_BinFile():
-    # print("size: "+ str(CalulateBinFileLength()))
+    fileSize = str(CalulateBinFileLength())
     BinFile = open(APP_NAME, 'rb')
     bytes = BinFile.read()
     BinFile.close()
     # print(len(bytes))
-    return bytes
+    return fileSize,bytes
     
 def Check_Available_Serial_Ports():
     com_ports = list(ports.comports())
@@ -40,8 +42,8 @@ def Read_Serial_Port(Data_Lenth):
 def Write_Serial_Port(Data):
     count =0
     for i in bytes_to_send:
-        x=bytes(chr(i).encode())
-        ser.write(x)
+        value = struct.pack('>B', i)
+        ser.write(value)
         count+=1
     return count #return no of data send
 
@@ -60,21 +62,31 @@ except:
     exit()
     
 if ser.is_open:
-    print("Port Open Success")
+    print("--Port Open Success\n")
 else:
-    print("Port Open Failed")
+    print("--Port Open Failed\n")
 
 
 # # ser.write(b"Hello world")
 # # x = ser.readline()
 
-bytes_to_send=Open_Read_BinFile()
+no_bytes_to_send ,bytes_to_send=Open_Read_BinFile()
 
-count = Write_Serial_Port(bytes_to_send)
-print("total no sent: ",count)
+while(len(no_bytes_to_send) < 8):
+     no_bytes_to_send += " "
+ser.write(no_bytes_to_send.encode())
+
+no_bytes_sent = Write_Serial_Port(bytes_to_send)
+print("total no of bytes readed from file: ",no_bytes_to_send)
+print("total no of bytes sent: ",no_bytes_sent)
+
+if no_bytes_to_send.strip() == str(no_bytes_sent) :
+    print("App data sent succefully")
+else:
+     print("failed to send data")
 
 ser.close()
 if ser.is_open:
-    print("Port still open\n")
+    print("\n-- Port still open\n")
 else:
-    print("\nPort closed \n")
+    print("\n--Port closed \n")
