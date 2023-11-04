@@ -2,7 +2,9 @@
 - [ ] Silent Bootloader Updater
 - [ ] Communicattive Bootloader Updater
 - [ ] Delta patching update
-- [ ] Normal update
+- [x] Normal update
+- [ ] BOOT Manager
+- [ ] SECURE BOOT
 ---------------------------------
 Communicattive Bootloader Updater 
 - Waits until stating je update with explicit requests from the tool
