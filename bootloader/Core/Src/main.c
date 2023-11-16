@@ -111,12 +111,10 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-  for(int i=0;i<3;i++){
 	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
-	  HAL_Delay(200);
-	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
-	  HAL_Delay(200);
-  }
+
+//	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
+
 
 //  //some variables for FatFs
 //     FATFS FatFs; 	//Fatfs handle
