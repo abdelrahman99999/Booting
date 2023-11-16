@@ -3,6 +3,6 @@
 - [ ] Communicattive Bootloader Updater
 - [ ] Delta patching update
 - [x] Normal update
-- [ ] BOOT Manager
+- [x] BOOT Manager
 - [ ] SECURE BOOT
 
