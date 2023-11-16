@@ -85,7 +85,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
+  for (uint8_t var = 0; var < 3; ++ var) {
+	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
+	  HAL_Delay(200);
+	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
+	  HAL_Delay(200);
+  }
+  HAL_Delay(500);
+  jump_to_application(0x08020000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
