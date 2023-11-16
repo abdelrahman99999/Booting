@@ -1,3 +1,4 @@
+"./Core/Src/App_UTIL.o"
 "./Core/Src/fatfs_sd.o"
 "./Core/Src/gpio.o"
 "./Core/Src/main.o"
