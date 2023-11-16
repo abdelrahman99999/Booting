@@ -4,7 +4,7 @@ import serial.tools.list_ports as ports
 import os
 import json
 
-APP_NAME ="application2.bin"
+APP_NAME ="application_red_blink.bin"
 global ser
 
 def CalulateBinFileLength():
@@ -62,7 +62,7 @@ except:
     exit()
     
 if ser.is_open:
-    print("--Port Open Success\n")
+    print("--Port Open Successfully\n")
 else:
     print("--Port Open Failed\n")
 
@@ -81,7 +81,7 @@ print("total no of bytes readed from file: ",no_bytes_to_send)
 print("total no of bytes sent: ",no_bytes_sent)
 
 if no_bytes_to_send.strip() == str(no_bytes_sent) :
-    print("App data sent succefully")
+    print("App data sent Successfully")
 else:
      print("failed to send data")
 
