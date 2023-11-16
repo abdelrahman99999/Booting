@@ -2,7 +2,6 @@ import struct
 import serial
 import serial.tools.list_ports as ports 
 import os
-import json
 
 APP_NAME ="application_red_blink.bin"
 global ser
