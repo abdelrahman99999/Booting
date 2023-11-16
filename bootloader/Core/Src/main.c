@@ -60,10 +60,9 @@ uint8_t Complete_Receiving_flag=ERROR;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
-	if(flag ==ERROR){
-		flag =SUCCESS;
+	if(Complete_Receiving_flag ==ERROR){
+		Complete_Receiving_flag =SUCCESS;
 	}
-
 }
 
 /* USER CODE END PV */
@@ -192,15 +191,15 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int result =0;
+  uint8_t result =0;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(flag ==SUCCESS){
-		  flag =ERROR;
+	  if(Complete_Receiving_flag ==SUCCESS){
+		  Complete_Receiving_flag =ERROR;
 		  result = Flash_Memory_Erase(0x8060000, app_size_length);
 		  result = Flash_Memory_Write(0x8060000, (uint32_t *)data_received, app_size_length);
 		  jump_to_application(0x8060000);
