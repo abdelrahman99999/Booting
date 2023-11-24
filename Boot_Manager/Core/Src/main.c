@@ -18,11 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "rng.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "App_UTIL.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -84,6 +85,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
   for (uint8_t var = 0; var < 3; ++ var) {
 	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
@@ -91,8 +93,29 @@ int main(void)
 	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
 	  HAL_Delay(200);
   }
-  HAL_Delay(500);
-  jump_to_application(0x08040000);
+
+
+//  uint8_t app_no_bytes_array[8] ;
+//  for (int var = 0; var < 8; ++var) {
+//	app_no_bytes_array[var]= *(uint8_t *)((0x080A0000 -64)+var);
+//}
+
+
+  uint32_t app_no_bytes = atoi( (uint8_t *)(0x080A0000 -64) );
+  uint8_t * digest_value_from_mem = (0x080A0000 -32);
+  uint8_t * digest_value_calculated =CalculateDigest(0x080A0000, app_no_bytes);
+
+  uint8_t result =DigestCompare(digest_value_from_mem,digest_value_calculated);
+  if(result==SUCCEEDED){
+	  //jump to Application
+	  HAL_Delay(500);
+	  jump_to_application(0x080A0000);
+  }else{
+	  //jump to Bootloader
+	  HAL_Delay(500);
+	  jump_to_application(0x08040000);
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -126,7 +149,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 16;
+  RCC_OscInitStruct.PLL.PLLN = 192;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();

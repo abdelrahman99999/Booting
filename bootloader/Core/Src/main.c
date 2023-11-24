@@ -60,13 +60,18 @@ uint8_t app_size[8];
 
 /* USER CODE BEGIN PV */
 uint8_t  data_received[100000];
-uint8_t Complete_Receiving_flag=ERROR;
+uint8_t  App_Digest_received[32];
+
+uint8_t Complete_Receiving_flag=0;
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
-	if(Complete_Receiving_flag ==ERROR){
-		Complete_Receiving_flag =SUCCESS;
+	if(Complete_Receiving_flag ==0){
+		Complete_Receiving_flag =1;
+		HAL_UART_Receive_IT(&huart4, App_Digest_received, 32);
+	}else if(Complete_Receiving_flag ==1){
+		Complete_Receiving_flag =2;
 	}
 }
 
@@ -190,6 +195,8 @@ int main(void)
   uint32_t app_size_length = atoi(app_size);
   HAL_UART_Receive_IT(&huart4, data_received, app_size_length);
 
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -201,8 +208,18 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(Complete_Receiving_flag ==SUCCESS){
-		  Complete_Receiving_flag =ERROR;
+
+	  if(Complete_Receiving_flag ==2){
+		  Complete_Receiving_flag =0;
+
+		  //clear memory sector for app length & app digest
+		  result = Flash_Memory_Erase((0x80A0000- 64) , 10 + 32);
+		  //writing app length
+		  result = Flash_Memory_Write((0x80A0000- 64), (uint32_t *)app_size, 8);
+		  //writing app digest
+		  result = Flash_Memory_Write((0x80A0000- 32), (uint32_t *)App_Digest_received, 32);
+
+		  //writing app itself
 		  result = Flash_Memory_Erase(0x80A0000, app_size_length);
 		  result = Flash_Memory_Write(0x80A0000, (uint32_t *)data_received, app_size_length);
 		  jump_to_application(0x80A0000);

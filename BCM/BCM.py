@@ -2,6 +2,7 @@ import struct
 import serial
 import serial.tools.list_ports as ports 
 import os
+from Crypto.Hash import SHA256
 
 APP_NAME ="application_red_blink.bin"
 global ser
@@ -46,6 +47,8 @@ def Write_Serial_Port(Data):
         count+=1
     return count #return no of data send
 
+def Generate_Digest(data):
+     return SHA256.new(data).digest()
 
 print("Welcome To BCM")
 print("-------------------")
@@ -71,6 +74,7 @@ else:
 
 no_bytes_to_send ,bytes_to_send=Open_Read_BinFile()
 
+#make the variable no_bytes_to_send with 8 bytes length
 while(len(no_bytes_to_send) < 8):
      no_bytes_to_send += " "
 ser.write(no_bytes_to_send.encode())
@@ -84,6 +88,11 @@ if no_bytes_to_send.strip() == str(no_bytes_sent) :
 else:
      print("failed to send data")
 
+#clculate app digest and send it
+digest = Generate_Digest(bytes_to_send)
+var_check = ser.write(digest)
+
+    
 ser.close()
 if ser.is_open:
     print("\n-- Port still open\n")
