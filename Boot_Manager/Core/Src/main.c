@@ -92,7 +92,7 @@ int main(void)
 	  HAL_Delay(200);
   }
   HAL_Delay(500);
-  jump_to_application(0x08020000);
+  jump_to_application(0x08040000);
   /* USER CODE END 2 */
 
   /* Infinite loop */

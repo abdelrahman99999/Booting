@@ -203,9 +203,9 @@ int main(void)
     /* USER CODE END WHILE */
 	  if(Complete_Receiving_flag ==SUCCESS){
 		  Complete_Receiving_flag =ERROR;
-		  result = Flash_Memory_Erase(0x8060000, app_size_length);
-		  result = Flash_Memory_Write(0x8060000, (uint32_t *)data_received, app_size_length);
-		  jump_to_application(0x8060000);
+		  result = Flash_Memory_Erase(0x80A0000, app_size_length);
+		  result = Flash_Memory_Write(0x80A0000, (uint32_t *)data_received, app_size_length);
+		  jump_to_application(0x80A0000);
 	  }
     /* USER CODE BEGIN 3 */
   }
