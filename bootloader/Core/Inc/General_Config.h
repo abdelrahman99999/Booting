@@ -1,0 +1,10 @@
+#ifndef INC_GENERAL_CONFIG_H_
+#define INC_GENERAL_CONFIG_H_
+
+#define DISABLED 0
+#define ENABLED (!DISABLED)
+
+#define DELTA_PATCH_ENABLED DISABLED
+
+
+#endif /* INC_GENERAL_CONFIG_H_ */
