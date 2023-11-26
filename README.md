@@ -11,6 +11,18 @@
 - BootLoader Maximum Size must be <= **18.75%** of the total flash size
 - Application Maximum Size must be <= **68.75%** of the total flash size
 
+# Releases
+### V_1.0.0 Design Flow
+![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_1_0_0.png?raw=true)
+
+# TOOLS
+## SW TOOLS
+- STM CubeIDE
+- STM Link Utility
+- WSL
+## HW TOOLS
+- stm32f439zi
+- USB To TTL Module
 
 
 ## TO DO 
@@ -20,4 +32,3 @@
 - [x] Normal update
 - [x] BOOT Manager
 - [ ] SECURE BOOT
-
