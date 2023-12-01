@@ -1,1 +1,4 @@
 .metadata/*
+application/Debug/*
+Boot_Manager/Debug/*
+bootloader/Debug/*
