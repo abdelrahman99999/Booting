@@ -3,13 +3,28 @@
 #define INC_APP_UTIL_H_
 
 #include "stm32f4xx_hal.h"
-uint32_t GetSector(uint32_t Address);
 
-uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInBytes);
+#define BOOTLOADER_RX_BUFFER_LENGTH     100000
 
-uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t dataSizeInBytes);
 
-void jump_to_application(uint32_t start_addr);
+#define BOOTLOADER_MAJOR_VERSION 1
+#define BOOTLOADER_MINOR_VERSION 2
+#define BOOTLOADER_PATCH_VERSION 3
 
+#define APP_ENTER 0
+#define BOOTLOADER_ENTER 1
+
+
+#define BOOTLOADER_START_ADDRESS 0x08040000
+#define BOOTLOADER_BINARY_START_ADDRESS BOOTLOADER_START_ADDRESS
+
+#define APP_START_ADDRESS 0x080A0000
+#define APP_NO_OF_BYTES_START_ADDRESS APP_START_ADDRESS
+#define APP_Digest_START_ADDRESS (APP_START_ADDRESS + 32)
+#define APP_BINARY_START_ADDRESS (APP_START_ADDRESS + 0x200)
+
+
+
+void Bootloader_Receive_Command(void);
 
 #endif /* INC_APP_UTIL_H_ */

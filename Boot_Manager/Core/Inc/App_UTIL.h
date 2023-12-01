@@ -7,8 +7,22 @@
 #define FAILED 1
 #define SUCCEEDED 0
 
-void jump_to_application(uint32_t start_addr);
-uint8_t * CalculateDigest(const uint8_t* image_start_address , uint32_t image_size );
-uint8_t DigestCompare ( uint8_t *Digest , uint8_t *MetaDigest);
+#define APP_ENTER 0
+#define BOOTLOADER_ENTER 1
+
+
+
+#define BOOTLOADER_START_ADDRESS 0x08040000
+#define BOOTLOADER_BINARY_START_ADDRESS BOOTLOADER_START_ADDRESS
+
+#define APP_START_ADDRESS 0x080A0000
+#define APP_BINARY_START_ADDRESS (APP_START_ADDRESS + 0x200)
+#define APP_NO_OF_BYTES_START_ADDRESS APP_START_ADDRESS
+#define APP_Digest_START_ADDRESS (APP_START_ADDRESS + 32)
+
+
+
+
+void App_Logic();
 
 #endif /* INC_APP_UTIL_H_ */

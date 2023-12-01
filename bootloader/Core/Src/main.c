@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs.h"
+#include "rtc.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -27,16 +28,6 @@
 /* USER CODE BEGIN Includes */
 #include "General_Config.h"
 #include "stm32f4xx_hal.h"
-
-#if DELTA_PATCH_ENABLED == ENABLED
-	#include "fatfs_sd.h"
-	#define JANPATCH_STREAM     FIL
-	#define SEEK_CUR 1
-	#define SEEK_END 2
-	#define SEEK_SET 0
-	#include "janpatch.h"
-#endif
-
 #include "App_UTIL.h"
 /* USER CODE END Includes */
 
@@ -52,28 +43,11 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
-uint8_t app_size[8];
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t  data_received[100000];
-uint8_t  App_Digest_received[32];
-
-uint8_t Complete_Receiving_flag=0;
-
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-
-	if(Complete_Receiving_flag ==0){
-		Complete_Receiving_flag =1;
-		HAL_UART_Receive_IT(&huart4, App_Digest_received, 32);
-	}else if(Complete_Receiving_flag ==1){
-		Complete_Receiving_flag =2;
-	}
-}
 
 /* USER CODE END PV */
 
@@ -119,111 +93,24 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI1_Init();
   MX_UART4_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
 	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
 //	  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_RESET);
 
-#if (DELTA_PATCH_ENABLED == ENABLED)
-  //some variables for FatFs
-     FATFS FatFs; 	//Fatfs handle
-     FIL fil_old; 		//File handle
-     FIL fil_patch; 		//File handle
-     FIL fil_new; 		//File handle
-     FRESULT fres; //Result after operations
-
-     //Open the file system
-       fres = f_mount(&FatFs, "", 1); //1=mount now
-       if (fres != FR_OK) {
-     	  printf("error\n");
-       }
-
-       //Now let's try to open file "old.txt"
-         fres = f_open(&fil_old, "app.bin", FA_READ);
-         if (fres != FR_OK) {
-       	  printf("error\n");
-         }
-     //Now let's try to open file "patch.txt"
-  	  fres = f_open(&fil_patch, "diff.patch", FA_READ);
-  	  if (fres != FR_OK) {
-  		  printf("error\n");
-  	  }
-  	  //Now let's try to open file "new.txt"
-  	 fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
-  	 if (fres != FR_OK) {
-  		 printf("error\n");
-  	 }
-      // janpatch_ctx contains buffers, and references to the file system functions
-      janpatch_ctx ctx = {
-          { (unsigned char*)malloc(1024), 1024 }, // source buffer
-          { (unsigned char*)malloc(1024), 1024 }, // patch buffer
-          { (unsigned char*)malloc(1024), 1024 }, // target buffer
-          &f_read,
-          &f_write,
-          &f_lseek
-      };
-
-    //patching
-    int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
-
-    fres = f_close(&fil_old);
-    fres = f_close(&fil_patch);
-    fres = f_close(&fil_new);
-    //successful patching
-
-    if(res == 0){
-  	    char buffer[4];
-  	    int size;
-  	    fres = f_open(&fil_new, "reconstruct.bin", FA_READ);
-  	    // Reads line by line until the end
-  	    do
-  	    {
-  	       f_read(&fil_new, buffer, sizeof(buffer), &size);
-  	      // buffer now has the data ,can use and flash it
-  	      memset(buffer,0,sizeof(buffer));
-  	    }while(size !=0);
-    }
-
-    //don't forget to close your file!
-    fres = f_close(&fil_new);
-    //We're done, so de-mount the drive
-    fres =f_mount(NULL, "", 0);
-#endif
-
-  //blocking until receive the app size
-  HAL_UART_Receive(&huart4, app_size, 8,HAL_MAX_DELAY);
-  uint32_t app_size_length = atoi(app_size);
-  HAL_UART_Receive_IT(&huart4, data_received, app_size_length);
-
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t result =0;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  Bootloader_Receive_Command();
     /* USER CODE END WHILE */
 
-	  if(Complete_Receiving_flag ==2){
-		  Complete_Receiving_flag =0;
-
-		  //clear memory sector for app length & app digest
-		  result = Flash_Memory_Erase((0x80A0000- 64) , 10 + 32);
-		  //writing app length
-		  result = Flash_Memory_Write((0x80A0000- 64), (uint32_t *)app_size, 8);
-		  //writing app digest
-		  result = Flash_Memory_Write((0x80A0000- 32), (uint32_t *)App_Digest_received, 32);
-
-		  //writing app itself
-		  result = Flash_Memory_Erase(0x80A0000, app_size_length);
-		  result = Flash_Memory_Write(0x80A0000, (uint32_t *)data_received, app_size_length);
-		  jump_to_application(0x80A0000);
-	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -246,9 +133,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;

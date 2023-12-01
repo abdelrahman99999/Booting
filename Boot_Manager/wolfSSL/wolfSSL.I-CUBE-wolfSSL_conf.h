@@ -123,7 +123,6 @@
 #define NO_STM32_HASH
 #define NO_STM32_CRYPTO
 
-
 #if defined(STM32WB55xx)
     #define WOLFSSL_STM32WB
     #define WOLFSSL_STM32_PKA

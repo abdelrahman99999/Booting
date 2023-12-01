@@ -1,7 +1,25 @@
 
 #include"App_UTIL.h"
+#include "usart.h"
+#include "rtc.h"
 
-uint32_t GetSector(uint32_t Address)
+static uint8_t Bootloader_Rx_Buffer[BOOTLOADER_RX_BUFFER_LENGTH];
+
+static enum Bootloader_Supported_Commands{
+	BOOTLOADER_GET_VERION_COMMAND,
+	BOOTLOADER_MEM_WRITE_COMMAND,
+	BOOTLOADER_MEM_ERASE_COMMAND,
+	BOOTLOADER_LEAVING_COMMAND
+};
+
+static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
+    HAL_PWR_EnableBkUpAccess();
+    HAL_RTCEx_BKUPWrite(&hrtc, reg, data);
+    HAL_PWR_DisableBkUpAccess();
+
+}
+
+static uint32_t GetSector(uint32_t Address)
 {
 	uint32_t sector = 0;
 
@@ -129,7 +147,7 @@ uint32_t GetSector(uint32_t Address)
 	return sector;
 }
 
-uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInBytes){
+static uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInBytes){
 	static FLASH_EraseInitTypeDef EraseInitStruct;   /* Structure to erase the flash area */
 	uint32_t SECTORError;
 
@@ -160,7 +178,7 @@ uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInByte
 	return SUCCESS;
 }
 
-uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t dataSizeInBytes){
+static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t dataSizeInBytes){
 	uint32_t numofWords=dataSizeInBytes/4;     /*getting number of words to write*/
 	uint32_t numofWordsWritten=0;
 
@@ -190,19 +208,76 @@ uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t
 
 }
 
-void jump_to_application(uint32_t start_addr){
-
-	/* Set the main stack pointer to to the application start address */
-	__set_MSP(*(uint32_t *)start_addr);
-	//__set_PSP(*(uint32_t *)start_addr);
-
-	/* Get the main application start address */
-	uint32_t jump_address = *(uint32_t *)(start_addr + 4);
-
-	// Create function pointer for the main application
-	void (*app_ptr)(void);
-	app_ptr = (void *)(jump_address);
-
-	// Now jump to the main application
-	app_ptr();
+static void Get_Vrsion_Command_Handler(){
+	uint8_t bootloader_version[3]={BOOTLOADER_MAJOR_VERSION,BOOTLOADER_MINOR_VERSION,BOOTLOADER_PATCH_VERSION};
+	HAL_UART_Transmit(&huart4, bootloader_version, 3, HAL_MAX_DELAY);
 }
+
+static void Mem_Erase_Command_Handler(){
+	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+//	uint8_t result = Flash_Memory_Erase((0x80A0000- 64) , 10 + 32);
+//	result = Flash_Memory_Erase(0x80A0000, app_size_length);
+	uint8_t result = Flash_Memory_Erase(APP_START_ADDRESS ,app_size_length+0x200 );
+	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+}
+
+
+static void Mem_Write_Command_Handler(){
+	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42], app_size_length, HAL_MAX_DELAY);
+	//writing app length
+	uint8_t result = Flash_Memory_Write(APP_NO_OF_BYTES_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[2], 8);
+	//writing app digest
+	result = Flash_Memory_Write(APP_Digest_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[10], 32);
+	//writing app itself
+	result = Flash_Memory_Write(APP_BINARY_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[42], app_size_length);
+
+
+	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+	//write on RTC reg no 0 to make bootManager enter application if other bootManager conditions are true
+	Write_RTC_backup_reg(0x00, APP_ENTER);
+}
+
+
+static void Leaving_Command_Handler(){
+	//sw reset
+	NVIC_SystemReset();
+}
+
+
+void Bootloader_Receive_Command(void){
+	uint8_t command_Length = 0;
+	/*clear receiving buffer*/
+	memset(Bootloader_Rx_Buffer, 0, BOOTLOADER_RX_BUFFER_LENGTH);
+	/* Read the length of the command received from the BCM */
+	HAL_UART_Receive(&huart4, Bootloader_Rx_Buffer, 1, HAL_MAX_DELAY);
+
+	command_Length = Bootloader_Rx_Buffer[0];
+	/* Read the command*/
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[1], command_Length, HAL_MAX_DELAY);
+
+	switch(Bootloader_Rx_Buffer[1]){
+	case BOOTLOADER_GET_VERION_COMMAND:
+		Get_Vrsion_Command_Handler();
+		break;
+	case BOOTLOADER_MEM_WRITE_COMMAND:
+		Mem_Write_Command_Handler();
+		break;
+	case BOOTLOADER_MEM_ERASE_COMMAND:
+		Mem_Erase_Command_Handler();
+		break;
+	case BOOTLOADER_LEAVING_COMMAND:
+		Leaving_Command_Handler();
+		break;
+	default:
+		//do no thing
+		break;
+	}
+}
+
+
+
+
+
