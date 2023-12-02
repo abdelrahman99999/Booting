@@ -7,9 +7,13 @@ static uint8_t Bootloader_Rx_Buffer[BOOTLOADER_RX_BUFFER_LENGTH];
 
 static enum Bootloader_Supported_Commands{
 	BOOTLOADER_GET_VERION_COMMAND,
-	BOOTLOADER_MEM_WRITE_COMMAND,
-	BOOTLOADER_MEM_ERASE_COMMAND,
-	BOOTLOADER_LEAVING_COMMAND
+	BOOTLOADER_MEM_WRITE_APP_COMMAND,
+	BOOTLOADER_MEM_ERASE_APP_COMMAND,
+	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND,
+	BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND,
+	BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND,
+	BOOTLOADER_LEAVING_TO_BOOTLOADER_UPDATER_COMMAND
+
 };
 
 static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
@@ -17,6 +21,23 @@ static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
     HAL_RTCEx_BKUPWrite(&hrtc, reg, data);
     HAL_PWR_DisableBkUpAccess();
 
+}
+
+static void jump_to_Image_Address(uint32_t start_addr){
+
+	/* Set the main stack pointer to to the application start address */
+	__set_MSP(*(uint32_t *)start_addr);
+	//__set_PSP(*(uint32_t *)start_addr);
+
+	/* Get the main application start address */
+	uint32_t jump_address = *(uint32_t *)(start_addr + 4);
+
+	// Create function pointer for the main application
+	void (*app_ptr)(void);
+	app_ptr = (void *)(jump_address);
+
+	// Now jump to the main application
+	app_ptr();
 }
 
 static uint32_t GetSector(uint32_t Address)
@@ -213,17 +234,15 @@ static void Get_Vrsion_Command_Handler(){
 	HAL_UART_Transmit(&huart4, bootloader_version, 3, HAL_MAX_DELAY);
 }
 
-static void Mem_Erase_Command_Handler(){
+static void Mem_Erase_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
-//	uint8_t result = Flash_Memory_Erase((0x80A0000- 64) , 10 + 32);
-//	result = Flash_Memory_Erase(0x80A0000, app_size_length);
 	uint8_t result = Flash_Memory_Erase(APP_START_ADDRESS ,app_size_length+0x200 );
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
 }
 
 
-static void Mem_Write_Command_Handler(){
+static void Mem_Write_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
 	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42], app_size_length, HAL_MAX_DELAY);
@@ -240,11 +259,37 @@ static void Mem_Write_Command_Handler(){
 	Write_RTC_backup_reg(0x00, APP_ENTER);
 }
 
-
-static void Leaving_Command_Handler(){
+static void Leaving_To_Boot_Manager_Command_Handler(){
 	//sw reset
 	NVIC_SystemReset();
 }
+
+static void Mem_Write_Bootloader_updater_Command_Handler(){
+
+	uint32_t Bootloader_updater_size_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[10], Bootloader_updater_size_length, HAL_MAX_DELAY);
+
+	//writing  Bootloader updater binary
+	uint8_t result = Flash_Memory_Write(BOOTLOADER_UPDATER_BINARY_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[10], Bootloader_updater_size_length);
+
+	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+
+
+}
+
+static void Mem_Erase_Bootloader_updater_Command_Handler(){
+	uint32_t Bootloader_updater_size_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	uint8_t result = Flash_Memory_Erase(BOOTLOADER_UPDATER_BINARY_START_ADDRESS ,Bootloader_updater_size_length );
+	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+}
+
+
+static void Bootloader_Leaving_To_Bootloader_Updater_Command_Handler(){
+	jump_to_Image_Address(BOOTLOADER_UPDATER_BINARY_START_ADDRESS);
+}
+
 
 
 void Bootloader_Receive_Command(void){
@@ -262,14 +307,23 @@ void Bootloader_Receive_Command(void){
 	case BOOTLOADER_GET_VERION_COMMAND:
 		Get_Vrsion_Command_Handler();
 		break;
-	case BOOTLOADER_MEM_WRITE_COMMAND:
-		Mem_Write_Command_Handler();
+	case BOOTLOADER_MEM_WRITE_APP_COMMAND:
+		Mem_Write_APP_Command_Handler();
 		break;
-	case BOOTLOADER_MEM_ERASE_COMMAND:
-		Mem_Erase_Command_Handler();
+	case BOOTLOADER_MEM_ERASE_APP_COMMAND:
+		Mem_Erase_APP_Command_Handler();
 		break;
-	case BOOTLOADER_LEAVING_COMMAND:
-		Leaving_Command_Handler();
+	case BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND:
+		Leaving_To_Boot_Manager_Command_Handler();
+		break;
+	case BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND:
+		Mem_Write_Bootloader_updater_Command_Handler();
+		break;
+	case BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND:
+		Mem_Erase_Bootloader_updater_Command_Handler();
+		break;
+	case BOOTLOADER_LEAVING_TO_BOOTLOADER_UPDATER_COMMAND:
+		Bootloader_Leaving_To_Bootloader_Updater_Command_Handler();
 		break;
 	default:
 		//do no thing
