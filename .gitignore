@@ -2,4 +2,4 @@
 Application/Debug/*
 Boot_Manager/Debug/*
 Bootloader/Debug/*
-Silent_Bootloader_Updater/Debug/*
+Bootloader_Updater/Silent_Bootloader_Updater/Debug/*
