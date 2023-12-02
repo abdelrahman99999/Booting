@@ -3,7 +3,7 @@
 - BootLoader
 - BootLoader Updater
 - Application
-# Initial Design 
+# Design 
 ### Memory Design
 ![Design](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Memory%20Design.png?raw=true)
 ### Memory Constraints
@@ -18,18 +18,29 @@
 ![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_2_0_0.png?raw=true)
 
 # TOOLS
-## SW TOOLS
-- STM CubeIDE
-- STM Link Utility
+### SW TOOLS
+- STM32 CubeIDE
+- STM32 St-Link Utility
 - WSL
-## HW TOOLS
+- Python
+### HW TOOLS
 - stm32f439zi
 - USB To TTL Module
 
+# How to Try
+1. Flash the boot manager manually using STM32 St-Link Utility
+2. Flash bootloader manually using STM32 St-Link Utility
+3. Run BCM python Script by 
+```cmd
+>> python.exe .\BCM\BCM.py
+```
+4. Use Serial Port that used by "USB To TTL Module"
+5. Enjoy Communicating  with Bootloader / APP / Bootloader Updater
 
-## TO DO 
+
+# TO DO 
 - [x] Silent Bootloader Updater
-- [ ] Communicattive Bootloader Updater
+- [ ] Communicative Bootloader Updater
 - [ ] Delta patching update
 - [x] Normal update
 - [x] BOOT Manager
