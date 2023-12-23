@@ -4,3 +4,4 @@ Boot_Manager/Debug/*
 Bootloader/Debug/*
 Bootloader_Updater/Silent_Bootloader_Updater/Debug/*
 Bootloader_Updater/Communicative_Bootloader_Updater/Debug/*
+*.pyc
