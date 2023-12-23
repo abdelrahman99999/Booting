@@ -6,7 +6,7 @@ from Crypto.Hash import SHA256
 
 
 APP_NAME ="application_green_blink.bin"
-BOOTLOADER_UPDATER_NAME ="Silent_Bootloader_Updater_for_BL_v345.bin"
+BOOTLOADER_UPDATER_NAME ="Silent_Bootloader_Updater_for_BL_v123.bin"
 
 BOOTLOADER_GET_VERION_COMMAND                          = 0
 BOOTLOADER_MEM_WRITE_FOR_APP_COMMAND                   = 1

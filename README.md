@@ -32,7 +32,8 @@
 2. Flash bootloader manually using STM32 St-Link Utility
 3. Run BCM python Script by 
 ```cmd
->> python.exe .\BCM\BCM.py
+>> cd BCM
+>> python.exe BCM.py
 ```
 4. Use Serial Port that used by "USB To TTL Module"
 5. Enjoy Communicating  with Bootloader / APP / Bootloader Updater
