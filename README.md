@@ -17,15 +17,21 @@
 ### V_2.0.0 Design Flow
 ![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_2_0_0.png?raw=true)
 
-# TOOLS
+# USED TOOLS
 ### SW TOOLS
-- STM32 CubeIDE
+- STM32 CubeIDE 1.11.0
 - STM32 St-Link Utility
 - WSL
 - Python
 ### HW TOOLS
-- stm32f439zi
+- STM32F439zi (Nucleo-144)
 - USB To TTL Module
+
+# Connection
+## Between Microcontroller and "USB To TTL Module"
+- Common Ground
+- Tx of Module connected to RX of Microcontroller( pin PC11 )
+- Rx of Module connected to TX of Microcontroller( pin PA0 )
 
 # How to Try
 1. Flash the boot manager manually using STM32 St-Link Utility
