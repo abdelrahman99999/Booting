@@ -41,7 +41,7 @@
 
 # TO DO 
 - [x] Silent Bootloader Updater
-- [ ] Communicative Bootloader Updater
+- [x] Communicative Bootloader Updater
 - [ ] Delta patching update
 - [x] Normal update
 - [x] BOOT Manager
