@@ -34,11 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint8_t RX_BUFFER[2];
-uint8_t receive_flag =0;
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-	receive_flag =99;
-}
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -103,12 +99,6 @@ int main(void)
   {
 	  App_Logic();
 
-	  if(receive_flag ==99){
-		  HAL_UART_Receive_IT(&huart4, RX_BUFFER, 2);
-		  if((RX_BUFFER[0]==1) && (RX_BUFFER[1]==BOOTLOADER_ENTER) ){
-			  Leaving_App_Handler();
-		  }
-	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
