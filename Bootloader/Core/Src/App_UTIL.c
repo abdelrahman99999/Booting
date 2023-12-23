@@ -229,7 +229,7 @@ static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, u
 
 }
 
-static void Get_Vrsion_Command_Handler(){
+static void Get_Version_Command_Handler(){
 	uint8_t bootloader_version[3]={BOOTLOADER_MAJOR_VERSION,BOOTLOADER_MINOR_VERSION,BOOTLOADER_PATCH_VERSION};
 	HAL_UART_Transmit(&huart4, bootloader_version, 3, HAL_MAX_DELAY);
 }
@@ -305,7 +305,7 @@ void Bootloader_Receive_Command(void){
 
 	switch(Bootloader_Rx_Buffer[1]){
 	case BOOTLOADER_GET_VERION_COMMAND:
-		Get_Vrsion_Command_Handler();
+		Get_Version_Command_Handler();
 		break;
 	case BOOTLOADER_MEM_WRITE_APP_COMMAND:
 		Mem_Write_APP_Command_Handler();
