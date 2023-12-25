@@ -1,7 +1,7 @@
 # Embedded SW Booting
 - Boot Manager
 - BootLoader
-- BootLoader Updater
+- BootLoader Updater (Silent / Communicative)
 - Application
 # Design 
 ### Memory Design
@@ -12,10 +12,16 @@
 - Application or Bootloader Updater Maximum Size must be <= **68.75%** of the total flash size
 
 # Releases
+
+### V_2.0.1 Design Flow
+<p align="center">
+  <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/Design_flow_v_2_0_1.svg" alt="Design flow"/>
+  <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/BootManager_Branching%20Conditions_v_2_0_1.svg" alt="Boot Manager Branching Conditions"/>
+</p>
+
 ### V_1.0.0 Design Flow
-![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_1_0_0.png?raw=true)
-### V_2.0.0 Design Flow
-![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_2_0_0.png?raw=true)
+![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_1_0_0.png?raw=true "V_1.0.0 Design Flow")
+
 
 # USED TOOLS
 ### SW TOOLS
