@@ -26,17 +26,25 @@
 ### SW TOOLS
 - STM32 CubeIDE 1.11.0
 - STM32 St-Link Utility
-- WSL
+- Ubuntu WSL
 - Python 3.10.8
 ### HW TOOLS
 - STM32F439zi (Nucleo-144)
 - USB To TTL Module
+- Micro SD Card Adapter Module
+- Micro SDHC 8 GB
 
 # Connection
-## Between Microcontroller and "USB To TTL Module"
+## Between Microcontroller and "USB To TTL Module" (UART Connection)
 - Common Ground
 - Tx of Module connected to RX of Microcontroller( pin PC11 )
 - Rx of Module connected to TX of Microcontroller( pin PA0 )
+## Between Microcontroller and "Micro SD Card Adapter Module" (SPI Connection)
+- ( pin PA5 ) : SPI SCK
+- ( pin PA6 ) : SPI MISO
+- ( pin PB5 ) : SPI MOSI
+- ( pin PC0 ) : SPI CS
+
 
 # How to Try
 1. Flash the boot manager manually (just for first time) using STM32 St-Link Utility
