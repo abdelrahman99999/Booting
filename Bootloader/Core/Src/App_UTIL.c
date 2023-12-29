@@ -376,7 +376,7 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 }
 
 /*
- * Receiving Commands from BCM
+ * Receiving Commands from BCM and handle it
  */
 static void Bootloader_Receive_Command(void){
 	uint8_t command_Length = 0;
