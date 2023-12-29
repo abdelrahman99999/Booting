@@ -5,9 +5,11 @@
 #include "rtc.h"
 #include "usart.h"
 
+#define N_ENTER 0
+#define ENTER 1
 
-#define APP_ENTER 0
-#define BOOTLOADER_ENTER 1
+#define APPLICATION_ENTER_FLAG_ADDRESS 0x00
+#define BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS (APPLICATION_ENTER_FLAG_ADDRESS+0x01)
 
 extern uint8_t RX_BUFFER[2];
 

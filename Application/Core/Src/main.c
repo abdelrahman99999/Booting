@@ -90,6 +90,7 @@ int main(void)
   MX_RTC_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+
   HAL_UART_Receive_IT(&huart4, RX_BUFFER, 2);
   /* USER CODE END 2 */
 

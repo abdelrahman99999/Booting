@@ -18,8 +18,9 @@ static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
 }
 
 static void Leaving_App_Handler(){
-	//write on flag to make bootManager enter bootloader
-	Write_RTC_backup_reg(0x00,BOOTLOADER_ENTER);
+	//make bootManager enter bootloader
+	Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
+	Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS,N_ENTER);
 	//sw reset
 	NVIC_SystemReset();
 }
@@ -35,10 +36,13 @@ void App_Logic(){
 	 HAL_Delay(500);
 
 	 if(receive_flag ==99){
-			  HAL_UART_Receive_IT(&huart4, RX_BUFFER, 2);
-			  if((RX_BUFFER[0]==1) && (RX_BUFFER[1]==BOOTLOADER_ENTER) ){
+
+		 	  receive_flag = 0;
+			  if((RX_BUFFER[0]==0x01) && (RX_BUFFER[1]==0x05) ){
 				  Leaving_App_Handler();
 			 }
+
+			 HAL_UART_Receive_IT(&huart4, RX_BUFFER, 2);
 	}
 }
 
