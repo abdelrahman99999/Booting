@@ -16,7 +16,6 @@
 ### V_2.0.1 Design Flow
 <p align="center">
   <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/Design_flow_v_2_0_1.svg" alt="Design flow"/>
-  <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/BootManager_Branching%20Conditions_v_2_0_1.svg" alt="Boot Manager Branching Conditions" hight =40% width=40%/>
 </p>
 
 ### V_1.0.0 Design Flow
