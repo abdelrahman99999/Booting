@@ -1,15 +1,39 @@
+/******************************************************************************
+ *
+ * File Name: APP_UTIL.c
+ *
+ * Description: Source file for helpful functions and global variables used by application
+ *
+ * Author: Abdelrahman Elsayed
+ *
+ *******************************************************************************/
+
+
+/*******************************************************************************
+ *                              Includes                       					*
+ *******************************************************************************/
 #include "APP_UTIL.h"
 #include "stm32f4xx_hal.h"
 #include "rtc.h"
 #include "usart.h"
 
+/*******************************************************************************
+ *                      Static global Variables		                            *
+ *******************************************************************************/
+
 //1: Bootloader valid
 //0: Bootloader not valid
 static uint8_t Bootloader_Validation = 1 ;
 
-
+/*
+ * Buffer used for Communication with BCM
+ */
 static uint8_t Bootloader_Updater_Rx_Buffer[BOOTLOADER_UPDATER_RX_BUFFER_LENGTH];
 
+
+/*******************************************************************************
+ *                      Static user define types		                        *
+ *******************************************************************************/
 static enum Bootloader_Supported_Commands{
 	BOOTLOADER_UPDATER_GET_VERION_COMMAND,
 	BOOTLOADER_UPDATER_MEM_WRITE_BOOTLOADER_COMMAND,
@@ -17,6 +41,13 @@ static enum Bootloader_Supported_Commands{
 	BOOTLOADER_UPDATER_LEAVING_TO_BOOT_MANAGER_COMMAND =5
 };
 
+
+/*******************************************************************************
+ *                      Static Functions Definitions                            *
+ *******************************************************************************/
+/*
+ * get flash sector number based on passed address
+ */
 static uint32_t GetSector(uint32_t Address)
 {
 	uint32_t sector = 0;
@@ -145,6 +176,9 @@ static uint32_t GetSector(uint32_t Address)
 	return sector;
 }
 
+/*
+ * write on flash
+ */
 static uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInBytes){
 	static FLASH_EraseInitTypeDef EraseInitStruct;   /* Structure to erase the flash area */
 	uint32_t SECTORError;
@@ -176,6 +210,9 @@ static uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSiz
 	return SUCCESS;
 }
 
+/*
+ * erase flash region
+ */
 static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t dataSizeInBytes){
 	uint32_t numofWords=dataSizeInBytes/4;     /*getting number of words to write*/
 	uint32_t numofWordsWritten=0;
@@ -206,6 +243,7 @@ static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, u
 
 }
 
+
 static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
     HAL_PWR_EnableBkUpAccess();
     HAL_RTCEx_BKUPWrite(&hrtc, reg, data);
@@ -213,13 +251,18 @@ static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
 
 }
 
-
+/*
+ * handle Bootloader updater version
+ */
 static void Get_Version_Command_Handler(){
 	uint8_t bootloader_updater_version[3]={BOOTLOADER_UPDATER_MAJOR_VERSION,BOOTLOADER_UPDATER_MINOR_VERSION,BOOTLOADER_UPDATER_PATCH_VERSION};
 	HAL_UART_Transmit(&huart4, bootloader_updater_version, 3, HAL_MAX_DELAY);
 }
 
 
+/*
+ * erase bootloader flah region
+ */
 static void Mem_Erase_BOOTLOADER_Command_Handler(){
 	uint32_t Bootloader_size_length = atoi(&Bootloader_Updater_Rx_Buffer[2]);
 
@@ -232,6 +275,9 @@ static void Mem_Erase_BOOTLOADER_Command_Handler(){
 	}
 }
 
+/*
+ * receive bootloader and write it on its flash region
+ */
 static void Mem_Write_BOOTLOADER_Command_Handler(){
 
 	uint32_t Bootloader_size_length = atoi(&Bootloader_Updater_Rx_Buffer[2]);
@@ -251,8 +297,14 @@ static void Mem_Write_BOOTLOADER_Command_Handler(){
 
 }
 
+/*
+ * handle leaving bootloader updater
+ */
 static void Leaving_To_Boot_Manager_Command_Handler(){
 
+	/*
+	 * update control flags
+	 */
 	if(Bootloader_Validation == 1){
 		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
 		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
@@ -265,6 +317,9 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 }
 
 
+/*
+ * Receiving Commands from BCM and handle it
+ */
 static void Bootloader_Updater_Receive_Command(void){
 	uint8_t command_Length = 0;
 	/*clear receiving buffer*/
@@ -296,6 +351,21 @@ static void Bootloader_Updater_Receive_Command(void){
 }
 
 
+/*******************************************************************************
+ *                      Global Functions Definitions                            *
+ *******************************************************************************/
+
+
+/***************************************************************************************************
+ * [Function Name]: App_Logic
+ *
+ * [Description]:  App logic and behaviour
+ *
+ * [Args]:         void
+ *
+ * [Returns]:      void
+ *
+ ***************************************************************************************************/
 void App_Logic(){
 	Bootloader_Updater_Receive_Command();
 }
