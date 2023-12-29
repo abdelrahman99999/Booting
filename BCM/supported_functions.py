@@ -72,7 +72,8 @@ def Generate_Digest(Data):
 
 def Execute_Get_version_Command():
     global ser
-    ser.write(bytes([0x01, 0x00]))
+    GET_VERION_COMMAND = 0
+    ser.write(bytes([0x01, GET_VERION_COMMAND]))
     data_received = ser.read(3)
     print("Major version: ",data_received[0])
     print("Minor version: ",data_received[1])
@@ -85,7 +86,7 @@ def Execute_MEM_ERASE_FOR_APP():
     while(len(app_size) < 8):
         app_size += " "
 
-    data_to_send =bytes([0x09, 0x02])
+    data_to_send =bytes([0x09, BOOTLOADER_MEM_ERASE_FOR_APP_COMMAND])
     ser.write(data_to_send)
     ser.write(app_size.encode())
     data_received = ser.read(1)
@@ -103,7 +104,7 @@ def Execute_MEM_WRITE_FOR_APP():
 
     digest = Generate_Digest(bytes_to_send)
 
-    data_to_send =bytes([(1+8+32), 0x01])
+    data_to_send =bytes([(1+8+32), BOOTLOADER_MEM_WRITE_FOR_APP_COMMAND])
 
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode())
@@ -125,15 +126,10 @@ def Execute_MEM_WRITE_FOR_APP():
          print("Flash failed")
 
 def Execute_Leaving_To_Boot_Manager_Command():
-
-    data_to_send =bytes([0x01, 0x03])
+    LEAVING_TO_BOOT_MANAGER_COMMAND = 5
+    data_to_send =bytes([0x01, LEAVING_TO_BOOT_MANAGER_COMMAND])
     ser.write(data_to_send)
     print("starting to leave ...")
-
-def Execute_App_Leaving_Command():
-    data_to_send =bytes([0x01, 0x01])
-    ser.write(data_to_send)
-    print("starting to leave Application...")
 
 def Execute_MEM_ERASE_FOR_Bootloader_Updater():
     global ser
@@ -142,7 +138,7 @@ def Execute_MEM_ERASE_FOR_Bootloader_Updater():
     while(len(app_size) < 8):
         app_size += " "
 
-    data_to_send =bytes([0x09, 0x05])
+    data_to_send =bytes([0x09, BOOTLOADER_MEM_ERASE_FOR_BOOTLOADER_UPDATER_COMMAND])
     ser.write(data_to_send)
     ser.write(app_size.encode())
     data_received = ser.read(1)
@@ -150,12 +146,6 @@ def Execute_MEM_ERASE_FOR_Bootloader_Updater():
          print("Erase successfully")
     else:
          print("Erase failed")
-
-def Execute_Bootloader_Leaving_To_Bootloader_Updater_Command():
-    global ser
-    data_to_send =bytes([0x01, 0x06])
-    ser.write(data_to_send)
-    print("starting to leave bootloader...")
 
 def Execute_MEM_WRITE_FOR_Bootloader_Updater():
     global ser
@@ -165,7 +155,7 @@ def Execute_MEM_WRITE_FOR_Bootloader_Updater():
         no_bytes_to_send += " "
 
 
-    data_to_send =bytes([(1+8), 0x04])
+    data_to_send =bytes([(1+8), BOOTLOADER_MEM_WRITE_FOR_BOOTLOADER_UPDATER_COMMAND])
 
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode())
@@ -232,39 +222,53 @@ def Execute_MEM_WRITE_FOR_Bootloader():
 
 def Execute_Command(Command):
     global ser
-    
+    #############################################
     #for bootloader
+    #############################################
     if(Command ==BOOTLOADER_GET_VERION_COMMAND):
         Execute_Get_version_Command()
+
     elif(Command ==BOOTLOADER_MEM_WRITE_FOR_APP_COMMAND):
         Execute_MEM_WRITE_FOR_APP()     
+
     elif(Command ==BOOTLOADER_MEM_ERASE_FOR_APP_COMMAND):
         Execute_MEM_ERASE_FOR_APP()   
-    elif(Command ==BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND):
-        Execute_Leaving_To_Boot_Manager_Command()
+
     elif(Command ==BOOTLOADER_MEM_WRITE_FOR_BOOTLOADER_UPDATER_COMMAND):
         Execute_MEM_WRITE_FOR_Bootloader_Updater()
+
     elif(Command ==BOOTLOADER_MEM_ERASE_FOR_BOOTLOADER_UPDATER_COMMAND):
         Execute_MEM_ERASE_FOR_Bootloader_Updater()
-    elif(Command ==BOOTLOADER_LEAVING_TO_BOOTLOADER_UPDATER_COMMAND):
-        Execute_Bootloader_Leaving_To_Bootloader_Updater_Command()
+
+    elif(Command ==BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND):
+        Execute_Leaving_To_Boot_Manager_Command()
+
+    #############################################
     #for application
-    elif(Command ==APP_LEAVING_BOOTLOADER_ENTER_COMMAND):
-        Execute_App_Leaving_Command()
+    #############################################
+    elif(Command ==APP_LEAVING_TO_BOOT_MANAGER_COMMAND):
+        Execute_Leaving_To_Boot_Manager_Command()
+
+    #############################################
     #for communicative bootloader updater
+    #############################################
     elif(Command ==BOOTLOADER_UPDATER_GET_VERION_COMMAND):
         Execute_Get_version_Command()
+
     elif(Command ==BOOTLOADER_UPDATER_MEM_WRITE_FOR_BOOTLOADER_COMMAND):
         Execute_MEM_WRITE_FOR_Bootloader()
+
     elif(Command ==BOOTLOADER_UPDATER_MEM_ERASE_FOR_BOOTLOADER_COMMAND):
         Execute_MEM_ERASE_FOR_Bootloader()
+
     elif(Command ==BOOTLOADER_UPDATER_LEAVING_TO_BOOT_MANAGER_COMMAND):
         Execute_Leaving_To_Boot_Manager_Command()
+
     elif (Command ==99):
         ser.close()
         if ser.is_open:
             print("--Port still open\n")
         else:
-            print("--Port closed\n")
+            print("--Port closed Successfully\n")
         exit()
      
