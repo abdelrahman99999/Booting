@@ -91,6 +91,9 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
+  /*
+   * To start receiving from BCM if there is Need
+   */
   HAL_UART_Receive_IT(&huart4, RX_BUFFER, 2);
   /* USER CODE END 2 */
 

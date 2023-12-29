@@ -1,15 +1,47 @@
+/******************************************************************************
+ *
+ * File Name: APP_UTIL.c
+ *
+ * Description: Source file for helpful functions and global variables used by application
+ *
+ * Author: Abdelrahman Elsayed
+ *
+ *******************************************************************************/
 
+
+/*******************************************************************************
+ *                              Includes                       					*
+ *******************************************************************************/
 #include "APP_UTIL.h"
 
-
+/*******************************************************************************
+ *                              Global Variables                                *
+ *******************************************************************************/
+/*
+ * Buufer used to receive data from BCM
+ */
 uint8_t RX_BUFFER[2];
-uint8_t receive_flag =0;
 
+/*******************************************************************************
+ *                              Static Global Variables                         *
+ *******************************************************************************/
+/*
+ * flag for Receiving Indication
+ */
+static uint8_t receive_flag =0;
+
+
+/*******************************************************************************
+ *                              Call Backs                                      *
+ *******************************************************************************/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	receive_flag =99;
 }
 
 
+/*******************************************************************************
+ *                      Static Functions Definitions                            *
+ *******************************************************************************/
 static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
     HAL_PWR_EnableBkUpAccess();
     HAL_RTCEx_BKUPWrite(&hrtc, reg, data);
@@ -25,8 +57,22 @@ static void Leaving_App_Handler(){
 	NVIC_SystemReset();
 }
 
+/*******************************************************************************
+ *                      Global Functions Definitions                           *
+ *******************************************************************************/
 
-void App_Logic(){
+
+/***************************************************************************************************
+ * [Function Name]: App_Logic
+ *
+ * [Description]:  App logic and behaviour
+ *
+ * [Args]:         void
+ *
+ * [Returns]:      void
+ *
+ ***************************************************************************************************/
+void App_Logic(void){
 	//LD1:GREEN
 	//LD2:BLUE
 	//LD3:RED
@@ -36,7 +82,7 @@ void App_Logic(){
 	 HAL_Delay(500);
 
 	 if(receive_flag ==99){
-
+		 	 //reseting flag to use it next times
 		 	  receive_flag = 0;
 			  if((RX_BUFFER[0]==0x01) && (RX_BUFFER[1]==0x05) ){
 				  Leaving_App_Handler();
