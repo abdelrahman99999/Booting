@@ -26,8 +26,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "General_Config.h"
-#include "stm32f4xx_hal.h"
 #include "App_UTIL.h"
 /* USER CODE END Includes */
 
@@ -96,6 +94,10 @@ int main(void)
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
+
+
+
+  APP_Logic();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,7 +107,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  APP_Logic();
+	  //APP_Logic();
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
