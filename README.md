@@ -16,7 +16,7 @@
 ### V_2.0.1 Design Flow
 <p align="center">
   <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/Design_flow_v_2_0_1.svg" alt="Design flow"/>
-  <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/BootManager_Branching%20Conditions_v_2_0_1.svg" alt="Boot Manager Branching Conditions"/>
+  <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/BootManager_Branching%20Conditions_v_2_0_1.svg" alt="Boot Manager Branching Conditions" hight =40% width=40%/>
 </p>
 
 ### V_1.0.0 Design Flow
@@ -40,8 +40,8 @@
 - Rx of Module connected to TX of Microcontroller( pin PA0 )
 
 # How to Try
-1. Flash the boot manager manually using STM32 St-Link Utility
-2. Flash bootloader manually using STM32 St-Link Utility
+1. Flash the boot manager manually (just for first time) using STM32 St-Link Utility
+2. Flash bootloader manually (just for first time) using STM32 St-Link Utility
 3. Run BCM python Script by 
 ```cmd
 >> cd BCM
@@ -50,6 +50,10 @@
 4. Use Serial Port that used by "USB To TTL Module"
 5. Enjoy Communicating  with Bootloader / APP / Bootloader Updater
 
+## BCM
+<p align="center">
+<img src="https://github.com/abdelrahman99999/Booting/blob/main/Docs/BCM.png?raw=true" alt="BCM" hight =50% width=50% />
+</p>
 
 # TO DO 
 - [x] Silent Bootloader Updater
