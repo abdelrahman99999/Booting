@@ -1,10 +1,23 @@
-
+/******************************************************************************
+ *
+ * File Name: APP_UTIL.h For Bootloader
+ *
+ * Description: header file for helpful functions and global variables used by Bootloader
+ *
+ * Author: Abdelrahman Elsayed
+ *
+ *******************************************************************************/
 #ifndef INC_APP_UTIL_H_
 #define INC_APP_UTIL_H_
 
+/*******************************************************************************
+ *                                Includes                                  *
+ *******************************************************************************/
 #include "stm32f4xx_hal.h"
 
-
+/*******************************************************************************
+ *                                Definitions                                  *
+ *******************************************************************************/
 #define BOOTLOADER_RX_BUFFER_LENGTH     100000
 
 
@@ -28,7 +41,9 @@
 #define BOOTLOADER_UPDATER_START_ADDRESS 0x080A0000
 #define BOOTLOADER_UPDATER_BINARY_START_ADDRESS BOOTLOADER_UPDATER_START_ADDRESS
 
-
+/*******************************************************************************
+ *                              Functions Prototypes                           *
+ *******************************************************************************/
 void APP_Logic(void);
 
 #endif /* INC_APP_UTIL_H_ */

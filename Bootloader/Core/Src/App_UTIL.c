@@ -1,9 +1,24 @@
+/******************************************************************************
+ *
+ * File Name: APP_UTIL.c
+ *
+ * Description: Source file for helpful functions and global variables used by application
+ *
+ * Author: Abdelrahman Elsayed
+ *
+ *******************************************************************************/
 
+
+/*******************************************************************************
+ *                              Includes                       					*
+ *******************************************************************************/
 #include"App_UTIL.h"
 #include "usart.h"
 #include "rtc.h"
 
-
+/*******************************************************************************
+ *                      Static global Variables		                            *
+ *******************************************************************************/
 //0: No application/BL Updater valid
 //1: Application is last written in shared memory
 //2: BL Updater is last written in shared memory
@@ -11,6 +26,9 @@ static uint8_t Last_written_image = 0 ;
 
 static uint8_t Bootloader_Rx_Buffer[BOOTLOADER_RX_BUFFER_LENGTH];
 
+/*******************************************************************************
+ *                      Static user define types		                        *
+ *******************************************************************************/
 static enum Bootloader_Supported_Commands{
 	BOOTLOADER_GET_VERION_COMMAND,
 	BOOTLOADER_MEM_WRITE_APP_COMMAND,
@@ -21,6 +39,10 @@ static enum Bootloader_Supported_Commands{
 
 };
 
+
+/*******************************************************************************
+ *                      Static Functions Definitions                            *
+ *******************************************************************************/
 static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
     HAL_PWR_EnableBkUpAccess();
     HAL_RTCEx_BKUPWrite(&hrtc, reg, data);
@@ -28,6 +50,9 @@ static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
 
 }
 
+/*
+ * jump to specific address
+ */
 static void jump_to_Image_Address(uint32_t start_addr){
 
 	/* Set the main stack pointer to to the application start address */
@@ -45,6 +70,9 @@ static void jump_to_Image_Address(uint32_t start_addr){
 	app_ptr();
 }
 
+/*
+ * get flash sector number based on passed address
+ */
 static uint32_t GetSector(uint32_t Address)
 {
 	uint32_t sector = 0;
@@ -173,6 +201,9 @@ static uint32_t GetSector(uint32_t Address)
 	return sector;
 }
 
+/*
+ * erase flash
+ */
 static uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSizeInBytes){
 	static FLASH_EraseInitTypeDef EraseInitStruct;   /* Structure to erase the flash area */
 	uint32_t SECTORError;
@@ -204,6 +235,9 @@ static uint8_t Flash_Memory_Erase(uint32_t StartSectorAddress , uint32_t dataSiz
 	return SUCCESS;
 }
 
+/*
+ * write flash
+ */
 static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, uint32_t dataSizeInBytes){
 	uint32_t numofWords=dataSizeInBytes/4;     /*getting number of words to write*/
 	uint32_t numofWordsWritten=0;
@@ -234,11 +268,17 @@ static uint8_t Flash_Memory_Write(uint32_t StartSectorAddress ,uint32_t *data, u
 
 }
 
+/*
+ * get bootloader version
+ */
 static void Get_Version_Command_Handler(){
 	uint8_t bootloader_version[3]={BOOTLOADER_MAJOR_VERSION,BOOTLOADER_MINOR_VERSION,BOOTLOADER_PATCH_VERSION};
 	HAL_UART_Transmit(&huart4, bootloader_version, 3, HAL_MAX_DELAY);
 }
 
+/*
+ * receiving application and write it on the flash
+ */
 static void Mem_Write_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
@@ -252,9 +292,6 @@ static void Mem_Write_APP_Command_Handler(){
 
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
 
-	//write on RTC reg no 0 to make bootManager enter application if other bootManager conditions are true
-//	Write_RTC_backup_reg(0x00, APP_ENTER);
-
 	if(result ==SUCCESS){
 		Last_written_image = 1;
 	}else{
@@ -262,6 +299,9 @@ static void Mem_Write_APP_Command_Handler(){
 	}
 }
 
+/*
+ * erase application flash region
+ */
 static void Mem_Erase_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
@@ -274,7 +314,9 @@ static void Mem_Erase_APP_Command_Handler(){
 	}
 }
 
-
+/*
+ * receiving Bootloader updater and write it on the flash
+ */
 static void Mem_Write_Bootloader_updater_Command_Handler(){
 
 	uint32_t Bootloader_updater_size_length = atoi(&Bootloader_Rx_Buffer[2]);
@@ -295,6 +337,9 @@ static void Mem_Write_Bootloader_updater_Command_Handler(){
 
 }
 
+/*
+ * erase Bootloader Updater flash region
+ */
 static void Mem_Erase_Bootloader_updater_Command_Handler(){
 	uint32_t Bootloader_updater_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
@@ -308,8 +353,14 @@ static void Mem_Erase_Bootloader_updater_Command_Handler(){
 	}
 }
 
+/*
+ * leaving bootloader
+ */
 static void Leaving_To_Boot_Manager_Command_Handler(){
 
+	/*
+	 * update Control flags
+	 */
 	if(Last_written_image == 0){
 		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
 		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
@@ -324,6 +375,9 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 	NVIC_SystemReset();
 }
 
+/*
+ * Receiving Commands from BCM
+ */
 static void Bootloader_Receive_Command(void){
 	uint8_t command_Length = 0;
 	/*clear receiving buffer*/
@@ -335,6 +389,9 @@ static void Bootloader_Receive_Command(void){
 	/* Read the command*/
 	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[1], command_Length, HAL_MAX_DELAY);
 
+	/*
+	 * Directing to specific Command Handler
+	 */
 	switch(Bootloader_Rx_Buffer[1]){
 	case BOOTLOADER_GET_VERION_COMMAND:
 		Get_Version_Command_Handler();
@@ -360,6 +417,21 @@ static void Bootloader_Receive_Command(void){
 	}
 }
 
+
+/*******************************************************************************
+ *                      Global Functions Definitions                            *
+ *******************************************************************************/
+
+/***************************************************************************************************
+ * [Function Name]: App_Logic
+ *
+ * [Description]:  App logic and behaviour
+ *
+ * [Args]:         void
+ *
+ * [Returns]:      void
+ *
+ ***************************************************************************************************/
 void APP_Logic(void){
 
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
