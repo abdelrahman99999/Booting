@@ -97,20 +97,23 @@ void App_Logic(){
 	uint32_t app_no_bytes = atoi( (uint8_t *)(APP_NO_OF_BYTES_START_ADDRESS) );
 	uint8_t * digest_value_from_memory = (APP_Digest_START_ADDRESS);
 	uint8_t * digest_value_calculated =CalculateDigest(APP_BINARY_START_ADDRESS, app_no_bytes);
+	uint8_t Application_Integrity_result =DigestCompare(digest_value_from_memory,digest_value_calculated);
 
-	uint8_t Integrity_result =DigestCompare(digest_value_from_memory,digest_value_calculated);
+	uint8_t Application_Enter_flag = Read_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS);
+	uint8_t BL_Updater_Enter_flag = Read_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS);
 
-	uint8_t Application_flag =Read_RTC_backup_reg(0x00);
 
-	if((Integrity_result==SUCCEEDED )&&(Application_flag ==APP_ENTER )){
+	if((Application_Integrity_result==SUCCEEDED )&&(Application_Enter_flag ==ENTER )){
 		//jump to Application
-		HAL_Delay(500);
 		jump_to_Image_Address(APP_BINARY_START_ADDRESS);
-	}else{
+	}else if(BL_Updater_Enter_flag == ENTER)
+		//jump to BL Updater
+		jump_to_Image_Address(BOOTLOADER_UPDATER_BINARY_START_ADDRESS);
+	else{
 		//jump to Bootloader
-
-		Write_RTC_backup_reg(0x00, BOOTLOADER_ENTER);
-		HAL_Delay(500);
+		//reseting flags as for example(application flag = ENTER but its integrity is NOK)
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS, N_ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
 		jump_to_Image_Address(BOOTLOADER_BINARY_START_ADDRESS);
 	}
 
