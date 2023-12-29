@@ -61,3 +61,4 @@
 - [x] Normal update
 - [x] BOOT Manager
 - [ ] SECURE BOOT
+- [ ] Doxygen Documentation
