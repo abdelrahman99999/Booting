@@ -3,16 +3,21 @@
 #include "usart.h"
 #include "rtc.h"
 
+
+//0: No application/BL Updater valid
+//1: Application is last written in shared memory
+//2: BL Updater is last written in shared memory
+static uint8_t Last_written_image = 0 ;
+
 static uint8_t Bootloader_Rx_Buffer[BOOTLOADER_RX_BUFFER_LENGTH];
 
 static enum Bootloader_Supported_Commands{
 	BOOTLOADER_GET_VERION_COMMAND,
 	BOOTLOADER_MEM_WRITE_APP_COMMAND,
 	BOOTLOADER_MEM_ERASE_APP_COMMAND,
-	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND,
 	BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND,
 	BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND,
-	BOOTLOADER_LEAVING_TO_BOOTLOADER_UPDATER_COMMAND
+	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND
 
 };
 
@@ -234,14 +239,6 @@ static void Get_Version_Command_Handler(){
 	HAL_UART_Transmit(&huart4, bootloader_version, 3, HAL_MAX_DELAY);
 }
 
-static void Mem_Erase_APP_Command_Handler(){
-	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
-
-	uint8_t result = Flash_Memory_Erase(APP_START_ADDRESS ,app_size_length+0x200 );
-	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
-}
-
-
 static void Mem_Write_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
@@ -253,16 +250,30 @@ static void Mem_Write_APP_Command_Handler(){
 	//writing app itself
 	result = Flash_Memory_Write(APP_BINARY_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[42], app_size_length);
 
-
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+
 	//write on RTC reg no 0 to make bootManager enter application if other bootManager conditions are true
-	Write_RTC_backup_reg(0x00, APP_ENTER);
+//	Write_RTC_backup_reg(0x00, APP_ENTER);
+
+	if(result ==SUCCESS){
+		Last_written_image = 1;
+	}else{
+		Last_written_image = 0;
+	}
 }
 
-static void Leaving_To_Boot_Manager_Command_Handler(){
-	//sw reset
-	NVIC_SystemReset();
+static void Mem_Erase_APP_Command_Handler(){
+	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	uint8_t result = Flash_Memory_Erase(APP_START_ADDRESS ,app_size_length+0x200 );
+	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+	if(result ==SUCCESS){
+		Last_written_image = 0;//desired
+	}else{
+		Last_written_image = 0;//not desired but for safety
+	}
 }
+
 
 static void Mem_Write_Bootloader_updater_Command_Handler(){
 
@@ -275,6 +286,12 @@ static void Mem_Write_Bootloader_updater_Command_Handler(){
 
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
 
+	if(result ==SUCCESS){
+			Last_written_image = 2;
+	}else{
+			Last_written_image = 0;
+	}
+
 
 }
 
@@ -283,16 +300,31 @@ static void Mem_Erase_Bootloader_updater_Command_Handler(){
 
 	uint8_t result = Flash_Memory_Erase(BOOTLOADER_UPDATER_BINARY_START_ADDRESS ,Bootloader_updater_size_length );
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+
+	if(result ==SUCCESS){
+			Last_written_image = 0;//desired
+	}else{
+			Last_written_image = 0;//not desired but for safety
+	}
 }
 
+static void Leaving_To_Boot_Manager_Command_Handler(){
 
-static void Bootloader_Leaving_To_Bootloader_Updater_Command_Handler(){
-	jump_to_Image_Address(BOOTLOADER_UPDATER_BINARY_START_ADDRESS);
+	if(Last_written_image == 0){
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
+	}else if(Last_written_image == 1){
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
+	}else if(Last_written_image == 2){
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, ENTER);
+	}
+	//sw reset
+	NVIC_SystemReset();
 }
 
-
-
-void Bootloader_Receive_Command(void){
+static void Bootloader_Receive_Command(void){
 	uint8_t command_Length = 0;
 	/*clear receiving buffer*/
 	memset(Bootloader_Rx_Buffer, 0, BOOTLOADER_RX_BUFFER_LENGTH);
@@ -313,17 +345,14 @@ void Bootloader_Receive_Command(void){
 	case BOOTLOADER_MEM_ERASE_APP_COMMAND:
 		Mem_Erase_APP_Command_Handler();
 		break;
-	case BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND:
-		Leaving_To_Boot_Manager_Command_Handler();
-		break;
 	case BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND:
 		Mem_Write_Bootloader_updater_Command_Handler();
 		break;
 	case BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND:
 		Mem_Erase_Bootloader_updater_Command_Handler();
 		break;
-	case BOOTLOADER_LEAVING_TO_BOOTLOADER_UPDATER_COMMAND:
-		Bootloader_Leaving_To_Bootloader_Updater_Command_Handler();
+	case BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND:
+		Leaving_To_Boot_Manager_Command_Handler();
 		break;
 	default:
 		//do no thing
@@ -331,7 +360,12 @@ void Bootloader_Receive_Command(void){
 	}
 }
 
+void APP_Logic(void){
 
+	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
+
+	Bootloader_Receive_Command();
+}
 
 
 
