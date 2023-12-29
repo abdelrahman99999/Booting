@@ -3,6 +3,10 @@
 #include "rtc.h"
 #include "usart.h"
 
+//1: Bootloader valid
+//0: Bootloader not valid
+static uint8_t Bootloader_Validation = 1 ;
+
 
 static uint8_t Bootloader_Updater_Rx_Buffer[BOOTLOADER_UPDATER_RX_BUFFER_LENGTH];
 
@@ -10,7 +14,7 @@ static enum Bootloader_Supported_Commands{
 	BOOTLOADER_UPDATER_GET_VERION_COMMAND,
 	BOOTLOADER_UPDATER_MEM_WRITE_BOOTLOADER_COMMAND,
 	BOOTLOADER_UPDATER_MEM_ERASE_BOOTLOADER_COMMAND,
-	BOOTLOADER_UPDATER_LEAVING_TO_BOOT_MANAGER_COMMAND
+	BOOTLOADER_UPDATER_LEAVING_TO_BOOT_MANAGER_COMMAND =5
 };
 
 static uint32_t GetSector(uint32_t Address)
@@ -209,28 +213,23 @@ static void Write_RTC_backup_reg(uint32_t reg ,uint32_t data){
 
 }
 
-static 	void Leaving_Handler(){
-	//write on flag to make bootManager enter bootloader
-	Write_RTC_backup_reg(0x00,BOOTLOADER_ENTER);
-	//sw reset
-	NVIC_SystemReset();
-}
 
 static void Get_Version_Command_Handler(){
 	uint8_t bootloader_updater_version[3]={BOOTLOADER_UPDATER_MAJOR_VERSION,BOOTLOADER_UPDATER_MINOR_VERSION,BOOTLOADER_UPDATER_PATCH_VERSION};
 	HAL_UART_Transmit(&huart4, bootloader_updater_version, 3, HAL_MAX_DELAY);
 }
 
-static void Leaving_To_Boot_Manager_Command_Handler(){
-	//sw reset
-	NVIC_SystemReset();
-}
 
 static void Mem_Erase_BOOTLOADER_Command_Handler(){
 	uint32_t Bootloader_size_length = atoi(&Bootloader_Updater_Rx_Buffer[2]);
 
 	uint8_t result = Flash_Memory_Erase(BOOTLOADER_BINARY_START_ADDRESS ,Bootloader_size_length );
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
+	if(result == SUCCESS){
+		Bootloader_Validation = 0;//desired
+	}else{
+		Bootloader_Validation = 0;//not desired but for safety
+	}
 }
 
 static void Mem_Write_BOOTLOADER_Command_Handler(){
@@ -244,12 +243,29 @@ static void Mem_Write_BOOTLOADER_Command_Handler(){
 
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
 
+	if(result == SUCCESS){
+			Bootloader_Validation = 1;
+	}else{
+			Bootloader_Validation = 0;
+	}
 
 }
 
+static void Leaving_To_Boot_Manager_Command_Handler(){
+
+	if(Bootloader_Validation == 1){
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, N_ENTER);
+	}else {
+		Write_RTC_backup_reg(APPLICATION_ENTER_FLAG_ADDRESS,N_ENTER);
+		Write_RTC_backup_reg(BOOTLOADER_UPDATER_ENTER_FLAG_ADDRESS, ENTER);
+	}
+	//sw reset
+	NVIC_SystemReset();
+}
 
 
-void Bootloader_Updater_Receive_Command(void){
+static void Bootloader_Updater_Receive_Command(void){
 	uint8_t command_Length = 0;
 	/*clear receiving buffer*/
 	memset(Bootloader_Updater_Rx_Buffer, 0, BOOTLOADER_UPDATER_RX_BUFFER_LENGTH);
@@ -278,4 +294,10 @@ void Bootloader_Updater_Receive_Command(void){
 		break;
 	}
 }
+
+
+void App_Logic(){
+	Bootloader_Updater_Receive_Command();
+}
+
 
