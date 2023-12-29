@@ -28,7 +28,7 @@
 - STM32 CubeIDE 1.11.0
 - STM32 St-Link Utility
 - WSL
-- Python
+- Python 3.10.8
 ### HW TOOLS
 - STM32F439zi (Nucleo-144)
 - USB To TTL Module
