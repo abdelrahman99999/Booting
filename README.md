@@ -47,6 +47,21 @@
 - VCC
 - Common Ground
 
+## How to generate Patch File by WSL (Delta Patching Feature)
+To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourceforge.net) or [JDiff.js](https://github.com/janjongboom/jdiff-js).
+
+1. Install a recent version of [Node.js](https://nodejs.org).
+2. Install JDiff.js:
+
+    ```
+    >> npm install jdiff-js -g
+    ```
+
+3. Generate a patch file via:
+
+    ```
+    >> jdiff old_SW.bin new_SW.bin old_to_new_SW.patch
+    ```
 
 # How to Try
 1. Flash the boot manager manually (just for first time) using STM32 St-Link Utility
