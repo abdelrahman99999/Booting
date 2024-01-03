@@ -36,14 +36,16 @@
 
 # Connection
 ## Between Microcontroller and "USB To TTL Module" (UART Connection)
-- Common Ground
 - Tx of Module connected to RX of Microcontroller( pin PC11 )
 - Rx of Module connected to TX of Microcontroller( pin PA0 )
+- Common Ground
 ## Between Microcontroller and "Micro SD Card Adapter Module" (SPI Connection)
 - ( pin PA5 ) : SPI SCK
 - ( pin PA6 ) : SPI MISO
 - ( pin PB5 ) : SPI MOSI
 - ( pin PC0 ) : SPI CS
+- VCC
+- Common Ground
 
 
 # How to Try
