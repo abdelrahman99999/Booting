@@ -41,7 +41,8 @@ static enum Bootloader_Supported_Commands{
 	BOOTLOADER_MEM_ERASE_APP_COMMAND,
 	BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND,
 	BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND,
-	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND
+	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND,
+	BOOTLOADER_RECONSTRUCT_IMAGE_COMMAND
 
 };
 
@@ -381,6 +382,104 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 	NVIC_SystemReset();
 }
 
+
+
+#if (DELTA_PATCH_ENABLED == ENABLED)
+static void Bootloader_Reconstruct_Delta_Image_Handler(){
+
+
+	uint32_t delta_image_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[10], delta_image_length, HAL_MAX_DELAY);
+
+
+	//some variables for FatFs
+	FATFS FatFs; 		//Fatfs handle
+	FIL fil_old; 		//File handle
+	FIL fil_patch; 		//File handle
+	FIL fil_new; 		//File handle
+	FRESULT fres; 		//Result after operations
+	//Open the file system
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+	if (fres != FR_OK) {
+		printf("error\n");
+	}
+
+
+	fres = f_open(&fil_patch, "diff.bin", FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_READ);
+	 if(fres == FR_OK) {
+		 printf("good\n");
+	  } else {
+		  printf("error\n");
+	  }
+
+	 UINT bytesWrote;
+	 f_write(&fil_patch, &Bootloader_Rx_Buffer[10], delta_image_length, &bytesWrote);
+
+
+	fres = f_open(&fil_old, "app.bin", FA_READ);
+	if (fres != FR_OK) {
+		printf("error\n");
+	}
+
+	fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS );
+	if (fres != FR_OK) {
+		printf("error\n");
+	}
+	// janpatch_ctx contains buffers, and references to the file system functions
+	janpatch_ctx ctx = {
+			{ (unsigned char*)malloc(1024), 1024 }, // source buffer
+			{ (unsigned char*)malloc(1024), 1024 }, // patch buffer
+			{ (unsigned char*)malloc(1024), 1024 }, // target buffer
+			&f_read,
+			&f_write,
+			&f_lseek
+	};
+
+	//patching
+	int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
+
+
+	fres = f_close(&fil_new);
+	fres = f_open(&fil_new, "reconstruct.bin", FA_READ );
+
+	//In case of successful patching
+	if(res == 0){
+		uint64_t size;
+		FILINFO fno;
+		fres = f_stat ("reconstruct.bin",&fno );
+
+		res = Flash_Memory_Erase(APP_START_ADDRESS ,fno.fsize );
+
+		f_read(&fil_new, Bootloader_Rx_Buffer, fno.fsize, &size);
+		// buffer now has the data ,can use and flash it
+		res = Flash_Memory_Write(APP_BINARY_START_ADDRESS, Bootloader_Rx_Buffer, fno.fsize);
+
+	}
+	HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
+
+	fres = f_close(&fil_old);
+	fres = f_close(&fil_patch);
+	fres = f_close(&fil_new);
+
+	//delete old data files
+	fres =  f_unlink("app.bin");
+	fres =  f_unlink("diff.bin");
+	//rename reconstruct to app to use it in next times
+	fres = f_rename("reconstruct.bin","app.bin");
+
+	//We're done, so de-mount the drive
+	fres =f_mount(NULL, "", 0);
+
+	if(fres ==SUCCESS){
+		Last_written_image = 1;
+	}else{
+		Last_written_image = 0;
+	}
+
+}
+
+#endif
 /*
  * Receiving Commands from BCM and handle it
  */
@@ -417,6 +516,9 @@ static void Bootloader_Receive_Command(void){
 	case BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND:
 		Leaving_To_Boot_Manager_Command_Handler();
 		break;
+	case BOOTLOADER_RECONSTRUCT_IMAGE_COMMAND:
+		Bootloader_Reconstruct_Delta_Image_Handler();
+		break;
 	default:
 		//do no thing
 		break;
@@ -442,73 +544,8 @@ void APP_Logic(void){
 
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin,GPIO_PIN_SET);
 
-	//Bootloader_Receive_Command();
+	Bootloader_Receive_Command();
 
-	#if (DELTA_PATCH_ENABLED == ENABLED)
-		//some variables for FatFs
-		FATFS FatFs; 	//Fatfs handle
-		FIL fil_old; 		//File handle
-		FIL fil_patch; 		//File handle
-		FIL fil_new; 		//File handle
-		FRESULT fres; //Result after operations
-
-		//Open the file system
-		fres = f_mount(&FatFs, "", 1); //1=mount now
-		if (fres != FR_OK) {
-			printf("error\n");
-		}
-
-		//Now let's try to open file "old.txt"
-		fres = f_open(&fil_old, "app.bin", FA_READ);
-		if (fres != FR_OK) {
-			printf("error\n");
-		}
-		//Now let's try to open file "patch.txt"
-		fres = f_open(&fil_patch, "diff.patch", FA_READ);
-		if (fres != FR_OK) {
-			printf("error\n");
-		}
-		//Now let's try to open file "new.txt"
-		fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
-		if (fres != FR_OK) {
-			printf("error\n");
-		}
-		// janpatch_ctx contains buffers, and references to the file system functions
-		janpatch_ctx ctx = {
-				{ (unsigned char*)malloc(1024), 1024 }, // source buffer
-				{ (unsigned char*)malloc(1024), 1024 }, // patch buffer
-				{ (unsigned char*)malloc(1024), 1024 }, // target buffer
-				&f_read,
-				&f_write,
-				&f_lseek
-		};
-
-		//patching
-		int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
-
-		fres = f_close(&fil_old);
-		fres = f_close(&fil_patch);
-		fres = f_close(&fil_new);
-		//successful patching
-
-		if(res == 0){
-			char buffer[4];
-			int size;
-			fres = f_open(&fil_new, "reconstruct.bin", FA_READ);
-			// Reads line by line until the end
-			do
-			{
-				f_read(&fil_new, buffer, sizeof(buffer), &size);
-				// buffer now has the data ,can use and flash it
-				memset(buffer,0,sizeof(buffer));
-			}while(size !=0);
-		}
-
-		//don't forget to close your file!
-		fres = f_close(&fil_new);
-		//We're done, so de-mount the drive
-		fres =f_mount(NULL, "", 0);
-	#endif
 }
 
 

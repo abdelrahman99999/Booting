@@ -219,6 +219,33 @@ def Execute_MEM_WRITE_FOR_Bootloader():
     else:
          print("Flash failed")     
 
+def Execute_Delta_Patching_Command():
+    global ser
+    no_bytes_to_send ,bytes_to_send=Open_Read_BinFile(DELTA_FILE_NAME)
+    #make the variable no_bytes_to_send with 8 bytes length
+    while(len(no_bytes_to_send) < 8):
+        no_bytes_to_send += " "
+
+    data_to_send =bytes([(1+8),BOOTLOADER_DELTA_PATCHING_COMMAND])
+
+    ser.write(data_to_send)  
+    ser.write(no_bytes_to_send.encode())
+
+    no_bytes_sent = Write_Serial_Port(bytes_to_send)
+    print("Total no of bytes readed from file: ",no_bytes_to_send)
+    print("Total no of bytes sent: ",no_bytes_sent)
+
+    if no_bytes_to_send.strip() == str(no_bytes_sent) :
+        print("App data sent Successfully")
+    else:
+        print("Failed to send data")
+    
+    data_received = ser.read(1)
+    if(data_received[0] == 0):
+         print("Erase & Flash successfully")
+    else:
+         print("Erase & Flash failed")     
+
 
 def Execute_Command(Command):
     global ser
@@ -242,6 +269,9 @@ def Execute_Command(Command):
 
     elif(Command ==BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND):
         Execute_Leaving_To_Boot_Manager_Command()
+
+    elif(Command ==BOOTLOADER_DELTA_PATCHING_COMMAND):
+        Execute_Delta_Patching_Command()
 
     #############################################
     #for application
