@@ -138,7 +138,8 @@ void App_Logic(){
 	/*
 	 * Branching Conditions
 	 */
-	if((Application_Integrity_result==SUCCEEDED )&&(Application_Enter_flag ==ENTER )){
+	//if((Application_Integrity_result==SUCCEEDED )&&(Application_Enter_flag ==ENTER )){
+	if((Application_Enter_flag ==ENTER )){
 		//jump to Application
 		jump_to_Image_Address(APP_BINARY_START_ADDRESS);
 	}else if(BL_Updater_Enter_flag == ENTER)
