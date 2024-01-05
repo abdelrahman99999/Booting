@@ -4,6 +4,7 @@ import serial.tools.list_ports as ports
 import os
 from Crypto.Hash import SHA256
 from config import *
+import time
 
 global ser
 
@@ -17,7 +18,7 @@ def init():
     port_needed =input()
 
     try:
-        ser = serial.Serial(port_needed, BAUDRATE ,timeout=2)
+        ser = serial.Serial(port_needed, BAUDRATE ,timeout=5)
     except:
         print("--An exception occurred, The port may be used by another process")
         exit()
@@ -89,6 +90,7 @@ def Execute_MEM_ERASE_FOR_APP():
     data_to_send =bytes([0x09, BOOTLOADER_MEM_ERASE_FOR_APP_COMMAND])
     ser.write(data_to_send)
     ser.write(app_size.encode())
+    time.sleep(0.07)
     data_received = ser.read(1)
     if(data_received[0] == 0):
          print("Erase successfully")
@@ -109,7 +111,7 @@ def Execute_MEM_WRITE_FOR_APP():
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode())
     ser.write(digest)
-
+    time.sleep(0.07)
     no_bytes_sent = Write_Serial_Port(bytes_to_send)
     print("Total no of bytes readed from file: ",no_bytes_to_send)
     print("Total no of bytes sent: ",no_bytes_sent)
@@ -118,7 +120,7 @@ def Execute_MEM_WRITE_FOR_APP():
         print("App data sent Successfully")
     else:
         print("Failed to send data")
-    
+    time.sleep(0.07)
     data_received = ser.read(1)
     if(data_received[0] == 0):
          print("Flash successfully")
@@ -226,11 +228,12 @@ def Execute_Delta_Patching_Command():
     while(len(no_bytes_to_send) < 8):
         no_bytes_to_send += " "
 
-    data_to_send =bytes([(1+8),BOOTLOADER_DELTA_PATCHING_COMMAND])
+    data_to_send =bytes([(1+8),BOOTLOADER_DELTA_PATCHING_APP_COMMAND])
 
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode())
 
+    time.sleep(0.07)
     no_bytes_sent = Write_Serial_Port(bytes_to_send)
     print("Total no of bytes readed from file: ",no_bytes_to_send)
     print("Total no of bytes sent: ",no_bytes_sent)
@@ -239,7 +242,7 @@ def Execute_Delta_Patching_Command():
         print("App data sent Successfully")
     else:
         print("Failed to send data")
-    
+    time.sleep(0.1)
     data_received = ser.read(1)
     if(data_received[0] == 0):
          print("Erase & Flash successfully")
@@ -270,7 +273,7 @@ def Execute_Command(Command):
     elif(Command ==BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND):
         Execute_Leaving_To_Boot_Manager_Command()
 
-    elif(Command ==BOOTLOADER_DELTA_PATCHING_COMMAND):
+    elif(Command ==BOOTLOADER_DELTA_PATCHING_APP_COMMAND):
         Execute_Delta_Patching_Command()
 
     #############################################

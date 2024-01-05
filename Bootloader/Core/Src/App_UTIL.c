@@ -42,7 +42,7 @@ static enum Bootloader_Supported_Commands{
 	BOOTLOADER_MEM_WRITE_BOOTLOADER_UPDATER_COMMAND,
 	BOOTLOADER_MEM_ERASE_BOOTLOADER_UPDATER_COMMAND,
 	BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND,
-	BOOTLOADER_RECONSTRUCT_IMAGE_COMMAND
+	BOOTLOADER_DELTA_PATCHING_COMMAND
 
 };
 
@@ -384,45 +384,32 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 
 
 
-#if (DELTA_PATCH_ENABLED == ENABLED)
-static void Bootloader_Reconstruct_Delta_Image_Handler(){
-
-
-	uint32_t delta_image_length = atoi(&Bootloader_Rx_Buffer[2]);
-
-	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[10], delta_image_length, HAL_MAX_DELAY);
-
+static uint8_t Reconstruct_Image_From_Delta(const char *original_image_path,const char *delta_image_path,const char *reconstruct_image_path, uint8_t * delta_image,uint32_t delta_image_size){
 
 	//some variables for FatFs
-	FATFS FatFs; 		//Fatfs handle
+
 	FIL fil_old; 		//File handle
 	FIL fil_patch; 		//File handle
 	FIL fil_new; 		//File handle
 	FRESULT fres; 		//Result after operations
-	//Open the file system
-	fres = f_mount(&FatFs, "", 1); //1=mount now
+
+	fres = f_open(&fil_patch,delta_image_path, FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_READ);
+	if(fres == FR_OK) {
+		printf("good\n");
+	} else {
+		printf("error\n");
+	}
+
+	UINT bytesWrote;
+	f_write(&fil_patch, delta_image, delta_image_size, &bytesWrote);
+
+
+	fres = f_open(&fil_old, original_image_path, FA_READ);
 	if (fres != FR_OK) {
 		printf("error\n");
 	}
 
-
-	fres = f_open(&fil_patch, "diff.bin", FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_READ);
-	 if(fres == FR_OK) {
-		 printf("good\n");
-	  } else {
-		  printf("error\n");
-	  }
-
-	 UINT bytesWrote;
-	 f_write(&fil_patch, &Bootloader_Rx_Buffer[10], delta_image_length, &bytesWrote);
-
-
-	fres = f_open(&fil_old, "app.bin", FA_READ);
-	if (fres != FR_OK) {
-		printf("error\n");
-	}
-
-	fres = f_open(&fil_new, "reconstruct.bin", FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS );
+	fres = f_open(&fil_new, reconstruct_image_path, FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS );
 	if (fres != FR_OK) {
 		printf("error\n");
 	}
@@ -439,28 +426,56 @@ static void Bootloader_Reconstruct_Delta_Image_Handler(){
 	//patching
 	int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
 
-
+	fres = f_close(&fil_old);
+	fres = f_close(&fil_patch);
 	fres = f_close(&fil_new);
-	fres = f_open(&fil_new, "reconstruct.bin", FA_READ );
+	return fres;
+}
 
-	//In case of successful patching
-	if(res == 0){
+static uint8_t Flashing_Reconstructed_Image(const char *reconstruct_image_path) {
+	FRESULT fres;
+	uint8_t res;
+	FIL fil_new; 		//File handle
+
+	fres = f_open(&fil_new, reconstruct_image_path, FA_READ );
+
+	if(fres == 0){
 		uint64_t size;
 		FILINFO fno;
-		fres = f_stat ("reconstruct.bin",&fno );
+		fres = f_stat (reconstruct_image_path,&fno );
 
 		res = Flash_Memory_Erase(APP_START_ADDRESS ,fno.fsize );
-
+		memset(Bootloader_Rx_Buffer,0,fno.fsize);
 		f_read(&fil_new, Bootloader_Rx_Buffer, fno.fsize, &size);
 		// buffer now has the data ,can use and flash it
 		res = Flash_Memory_Write(APP_BINARY_START_ADDRESS, Bootloader_Rx_Buffer, fno.fsize);
 
 	}
+	fres = f_close(&fil_new);
+	return res;
+}
+
+
+#if (DELTA_PATCH_ENABLED == ENABLED)
+static void Bootloader_Delta_Patching_Handler(){
+
+	FATFS FatFs; 		//Fatfs handle
+	FRESULT fres; 		//Result after operations
+	//Open the file system
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+
+	uint32_t delta_image_length = atoi(&Bootloader_Rx_Buffer[2]);
+
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[10], delta_image_length, HAL_MAX_DELAY);
+
+	//reconstruct image
+	int res = Reconstruct_Image_From_Delta("app.bin", "diff.bin", "reconstruct.bin", &Bootloader_Rx_Buffer[10], delta_image_length);
+
+	//flashing reconstruceted Image
+	res = Flashing_Reconstructed_Image("reconstruct.bin");
+
 	HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
 
-	fres = f_close(&fil_old);
-	fres = f_close(&fil_patch);
-	fres = f_close(&fil_new);
 
 	//delete old data files
 	fres =  f_unlink("app.bin");
@@ -516,8 +531,8 @@ static void Bootloader_Receive_Command(void){
 	case BOOTLOADER_LEAVING_TO_BOOT_MANAGER_COMMAND:
 		Leaving_To_Boot_Manager_Command_Handler();
 		break;
-	case BOOTLOADER_RECONSTRUCT_IMAGE_COMMAND:
-		Bootloader_Reconstruct_Delta_Image_Handler();
+	case BOOTLOADER_DELTA_PATCHING_COMMAND:
+		Bootloader_Delta_Patching_Handler();
 		break;
 	default:
 		//do no thing

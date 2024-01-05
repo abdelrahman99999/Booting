@@ -18,7 +18,7 @@
 /*******************************************************************************
  *                                Definitions                                  *
  *******************************************************************************/
-#define BOOTLOADER_RX_BUFFER_LENGTH     100000
+#define BOOTLOADER_RX_BUFFER_LENGTH     150000
 
 
 #define BOOTLOADER_MAJOR_VERSION 3
