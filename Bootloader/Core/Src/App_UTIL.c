@@ -297,6 +297,31 @@ static void Mem_Write_APP_Command_Handler(){
 	//writing app itself
 	result = Flash_Memory_Write(APP_BINARY_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[42], app_size_length);
 
+	//writing app in file system in case using delta patching technique
+	FATFS FatFs; 		//Fatfs handle
+	FRESULT fres; 		//Result after operations
+	FILINFO fileInfo;
+	UINT bytesWrote;
+	FIL fil; 		//File handle
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+
+	// Check if a file exists
+	fres = f_stat("app.bin", &fileInfo);
+	if (fres == FR_OK) {
+	    // File exists
+		fres =  f_unlink("app.bin");//delete old app
+	} else if (result == FR_NO_FILE) {
+	    // File doesn't exist
+	} else {
+	    // Error occurred
+	}
+
+	fres = f_open(&fil,"app.bin", FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_READ);
+	fres = f_write(&fil, &Bootloader_Rx_Buffer[42], app_size_length, &bytesWrote);
+
+	fres = f_close(&fil);
+	fres =f_mount(NULL, "", 0);
+
 	HAL_UART_Transmit(&huart4, &result, 1, HAL_MAX_DELAY);
 
 	if(result ==SUCCESS){
@@ -386,8 +411,8 @@ static void Leaving_To_Boot_Manager_Command_Handler(){
 
 static uint8_t Reconstruct_Image_From_Delta(const char *original_image_path,const char *delta_image_path,const char *reconstruct_image_path, uint8_t * delta_image,uint32_t delta_image_size){
 
+	uint8_t total_result=0;
 	//some variables for FatFs
-
 	FIL fil_old; 		//File handle
 	FIL fil_patch; 		//File handle
 	FIL fil_new; 		//File handle
@@ -395,23 +420,30 @@ static uint8_t Reconstruct_Image_From_Delta(const char *original_image_path,cons
 
 	fres = f_open(&fil_patch,delta_image_path, FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_READ);
 	if(fres == FR_OK) {
-		printf("good\n");
+
 	} else {
-		printf("error\n");
+		total_result+=1;
 	}
 
 	UINT bytesWrote;
 	f_write(&fil_patch, delta_image, delta_image_size, &bytesWrote);
+	if(fres == FR_OK) {
 
+	} else {
+		total_result+=1;
+	}
 
 	fres = f_open(&fil_old, original_image_path, FA_READ);
-	if (fres != FR_OK) {
-		printf("error\n");
+	if(fres == FR_OK) {
+	} else {
+		total_result+=1;
 	}
 
 	fres = f_open(&fil_new, reconstruct_image_path, FA_WRITE| FA_OPEN_ALWAYS | FA_CREATE_ALWAYS );
-	if (fres != FR_OK) {
-		printf("error\n");
+	if(fres == FR_OK) {
+
+	} else {
+		total_result+=1;
 	}
 	// janpatch_ctx contains buffers, and references to the file system functions
 	janpatch_ctx ctx = {
@@ -425,34 +457,82 @@ static uint8_t Reconstruct_Image_From_Delta(const char *original_image_path,cons
 
 	//patching
 	int res = janpatch(ctx, &fil_old, &fil_patch, &fil_new);
+	if(res == 0) {
 
+	} else {
+		total_result+=1;
+	}
 	fres = f_close(&fil_old);
+	if(fres == FR_OK) {
+
+	} else {
+		total_result+=1;
+	}
 	fres = f_close(&fil_patch);
+	if(fres == FR_OK) {
+
+	} else {
+		total_result+=1;
+	}
 	fres = f_close(&fil_new);
-	return fres;
+	if(fres == FR_OK) {
+
+	} else {
+		total_result+=1;
+	}
+	return total_result;
 }
 
 static uint8_t Flashing_Reconstructed_Image(const char *reconstruct_image_path) {
+
+	uint8_t total_result=0;
+
 	FRESULT fres;
 	uint8_t res;
 	FIL fil_new; 		//File handle
 
 	fres = f_open(&fil_new, reconstruct_image_path, FA_READ );
 
-	if(fres == 0){
+	if(fres == FR_OK){
 		uint64_t size;
 		FILINFO fno;
 		fres = f_stat (reconstruct_image_path,&fno );
+		if(fres == FR_OK) {
 
+		} else {
+			total_result+=1;
+		}
 		res = Flash_Memory_Erase(APP_START_ADDRESS ,fno.fsize );
+		if(res == 0) {
+
+		} else {
+			total_result+=1;
+		}
 		memset(Bootloader_Rx_Buffer,0,fno.fsize);
-		f_read(&fil_new, Bootloader_Rx_Buffer, fno.fsize, &size);
+		fres = f_read(&fil_new, Bootloader_Rx_Buffer, fno.fsize, &size);
+		if(fres == FR_OK) {
+
+		} else {
+			total_result+=1;
+		}
 		// buffer now has the data ,can use and flash it
 		res = Flash_Memory_Write(APP_BINARY_START_ADDRESS, Bootloader_Rx_Buffer, fno.fsize);
+		if(res == 0) {
 
+		} else {
+			total_result+=1;
+		}
+
+	}else {
+		total_result+=1;
 	}
 	fres = f_close(&fil_new);
-	return res;
+	if(fres == 0) {
+
+	} else {
+		total_result+=1;
+	}
+	return total_result;
 }
 
 
@@ -470,27 +550,35 @@ static void Bootloader_Delta_Patching_Handler(){
 
 	//reconstruct image
 	int res = Reconstruct_Image_From_Delta("app.bin", "diff.bin", "reconstruct.bin", &Bootloader_Rx_Buffer[10], delta_image_length);
+	if(res == 0){
+		//flashing reconstruceted Image
+			res = Flashing_Reconstructed_Image("reconstruct.bin");
+			if(res == 0) {
 
-	//flashing reconstruceted Image
-	res = Flashing_Reconstructed_Image("reconstruct.bin");
+				//delete old data files
+				fres =  f_unlink("app.bin");
+				fres +=  f_unlink("diff.bin");
+				//rename reconstruct to app to use it in next times
+				fres += f_rename("reconstruct.bin","app.bin");
 
-	HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
+				//We're done, so de-mount the drive
+				fres +=f_mount(NULL, "", 0);
 
+				if(fres ==SUCCESS){
+					Last_written_image = 1;
+				}else{
+					Last_written_image = 0;
+				}
+				HAL_UART_Transmit(&huart4, &fres, 1, HAL_MAX_DELAY);
+			} else {
+				HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
+			}
 
-	//delete old data files
-	fres =  f_unlink("app.bin");
-	fres =  f_unlink("diff.bin");
-	//rename reconstruct to app to use it in next times
-	fres = f_rename("reconstruct.bin","app.bin");
-
-	//We're done, so de-mount the drive
-	fres =f_mount(NULL, "", 0);
-
-	if(fres ==SUCCESS){
-		Last_written_image = 1;
 	}else{
-		Last_written_image = 0;
+		res =1;
+		HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
 	}
+
 
 }
 
