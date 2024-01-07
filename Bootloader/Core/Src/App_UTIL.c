@@ -502,7 +502,7 @@ static uint8_t Flashing_Reconstructed_Image(const char *reconstruct_image_path) 
 		} else {
 			total_result+=1;
 		}
-		res = Flash_Memory_Erase(APP_START_ADDRESS ,fno.fsize );
+		res = Flash_Memory_Erase(APP_BINARY_START_ADDRESS ,fno.fsize );
 		if(res == 0) {
 
 		} else {
@@ -539,17 +539,29 @@ static uint8_t Flashing_Reconstructed_Image(const char *reconstruct_image_path) 
 #if (DELTA_PATCH_ENABLED == ENABLED)
 static void Bootloader_Delta_Patching_Handler(){
 
+
 	FATFS FatFs; 		//Fatfs handle
 	FRESULT fres; 		//Result after operations
 	//Open the file system
 	fres = f_mount(&FatFs, "", 1); //1=mount now
 
 	uint32_t delta_image_length = atoi(&Bootloader_Rx_Buffer[2]);
+	uint32_t reconstructed_image_length = atoi(&Bootloader_Rx_Buffer[10]);
 
-	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[10], delta_image_length, HAL_MAX_DELAY);
 
+	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[50], delta_image_length, HAL_MAX_DELAY);
+
+	//writing reconstructed image length
+	uint8_t re_length[8]={0};
+	memcpy(re_length,&Bootloader_Rx_Buffer[10],8);
+	//writing app digest
+	uint8_t digest_[32]={0};
+	memcpy(digest_,&Bootloader_Rx_Buffer[18],32);
+
+
+	uint8_t res =0;
 	//reconstruct image
-	int res = Reconstruct_Image_From_Delta("app.bin", "diff.bin", "reconstruct.bin", &Bootloader_Rx_Buffer[10], delta_image_length);
+	res += Reconstruct_Image_From_Delta("app.bin", "diff.bin", "reconstruct.bin", &Bootloader_Rx_Buffer[50], delta_image_length);
 	if(res == 0){
 		//flashing reconstruceted Image
 			res = Flashing_Reconstructed_Image("reconstruct.bin");
@@ -566,6 +578,8 @@ static void Bootloader_Delta_Patching_Handler(){
 
 				if(fres ==SUCCESS){
 					Last_written_image = 1;
+					 res = Flash_Memory_Write(APP_NO_OF_BYTES_START_ADDRESS, (uint32_t *)re_length, 8);
+					 res += Flash_Memory_Write(APP_Digest_START_ADDRESS, (uint32_t *)digest_, 32);
 				}else{
 					Last_written_image = 0;
 				}

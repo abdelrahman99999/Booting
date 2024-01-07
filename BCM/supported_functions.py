@@ -228,12 +228,19 @@ def Execute_Delta_Patching_Command():
     while(len(no_bytes_to_send) < 8):
         no_bytes_to_send += " "
 
-    data_to_send =bytes([(1+8),BOOTLOADER_DELTA_PATCHING_APP_COMMAND])
+    no_bytes_reconstruceted,bytes_reconstructed = Open_Read_BinFile(APP_NAME_FOR_DELTA_PATCHING)
+    #make the variable no_bytes_to_send with 8 bytes length
+    while(len(no_bytes_reconstruceted) < 8):
+        no_bytes_reconstruceted += " "
+
+    digest = Generate_Digest(bytes_reconstructed)
+    data_to_send =bytes([(1+8+8+32),BOOTLOADER_DELTA_PATCHING_APP_COMMAND])
 
     ser.write(data_to_send)  
-    ser.write(no_bytes_to_send.encode())
-
-    time.sleep(0.1)
+    ser.write(no_bytes_to_send.encode()) #delta
+    ser.write(no_bytes_reconstruceted.encode()) #reconstruct
+    ser.write(digest)
+    time.sleep(0.07)
     no_bytes_sent = Write_Serial_Port(bytes_to_send)
     print("Total no of bytes readed from file: ",no_bytes_to_send)
     print("Total no of bytes sent: ",no_bytes_sent)
