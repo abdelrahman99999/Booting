@@ -76,14 +76,17 @@ To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourcefo
 
 ## BCM
 <p align="center">
-<img src="https://github.com/abdelrahman99999/Booting/blob/main/Docs/BCM.png?raw=true" alt="BCM" hight =50% width=50% />
+<img src="https://github.com/abdelrahman99999/Booting/blob/Delta_Patching_New/Docs/New%20BCM.png?raw=true" alt="BCM" hight =70% width=70% />
 </p>
 
 # TO DO 
+- [x] Bootloader
+- [x] BOOT Manager
+- [x] Normal update
 - [x] Silent Bootloader Updater
 - [x] Communicative Bootloader Updater
-- [ ] Delta patching update
-- [x] Normal update
-- [x] BOOT Manager
+- [x] Delta patching update for Application
 - [ ] SECURE BOOT
 - [ ] Doxygen Documentation
+
+
