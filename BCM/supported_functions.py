@@ -233,7 +233,7 @@ def Execute_Delta_Patching_Command():
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode())
 
-    time.sleep(0.07)
+    time.sleep(0.1)
     no_bytes_sent = Write_Serial_Port(bytes_to_send)
     print("Total no of bytes readed from file: ",no_bytes_to_send)
     print("Total no of bytes sent: ",no_bytes_sent)
