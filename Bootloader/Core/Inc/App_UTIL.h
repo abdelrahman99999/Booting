@@ -14,11 +14,11 @@
  *                                Includes                                  *
  *******************************************************************************/
 #include "stm32f4xx_hal.h"
-
+#include "General_Config.h"
 /*******************************************************************************
  *                                Definitions                                  *
  *******************************************************************************/
-#define BOOTLOADER_RX_BUFFER_LENGTH     100000
+#define BOOTLOADER_RX_BUFFER_LENGTH     150000
 
 
 #define BOOTLOADER_MAJOR_VERSION 3
@@ -40,6 +40,16 @@
 
 #define BOOTLOADER_UPDATER_START_ADDRESS 0x080A0000
 #define BOOTLOADER_UPDATER_BINARY_START_ADDRESS BOOTLOADER_UPDATER_START_ADDRESS
+
+/*
+ * used for Delta Patching
+ */
+#if DELTA_PATCH_ENABLED == ENABLED
+	#define JANPATCH_STREAM     FIL
+	#define SEEK_CUR 1
+	#define SEEK_END 2
+	#define SEEK_SET 0
+#endif
 
 /*******************************************************************************
  *                              Functions Prototypes                           *

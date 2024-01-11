@@ -26,17 +26,42 @@
 ### SW TOOLS
 - STM32 CubeIDE 1.11.0
 - STM32 St-Link Utility
-- WSL
+- Ubuntu WSL
 - Python 3.10.8
 ### HW TOOLS
 - STM32F439zi (Nucleo-144)
 - USB To TTL Module
+- Micro SD Card Adapter Module
+- Micro SDHC 8 GB
 
 # Connection
-## Between Microcontroller and "USB To TTL Module"
-- Common Ground
+## Between Microcontroller and "USB To TTL Module" (UART Connection)
 - Tx of Module connected to RX of Microcontroller( pin PC11 )
 - Rx of Module connected to TX of Microcontroller( pin PA0 )
+- Common Ground
+## Between Microcontroller and "Micro SD Card Adapter Module" (SPI Connection)
+- ( pin PA5 ) : SPI SCK
+- ( pin PA6 ) : SPI MISO
+- ( pin PB5 ) : SPI MOSI
+- ( pin PC0 ) : SPI CS
+- VCC
+- Common Ground
+
+## How to generate Patch File by WSL (Delta Patching Feature)
+To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourceforge.net) or [JDiff.js](https://github.com/janjongboom/jdiff-js).
+
+1. Install a recent version of [Node.js](https://nodejs.org).
+2. Install JDiff.js:
+
+    ```
+    >> npm install jdiff-js -g
+    ```
+
+3. Generate a patch file via:
+
+    ```
+    >> jdiff old_SW.bin new_SW.bin old_to_new_SW.patch
+    ```
 
 # How to Try
 1. Flash the boot manager manually (just for first time) using STM32 St-Link Utility
@@ -51,14 +76,17 @@
 
 ## BCM
 <p align="center">
-<img src="https://github.com/abdelrahman99999/Booting/blob/main/Docs/BCM.png?raw=true" alt="BCM" hight =50% width=50% />
+<img src="https://github.com/abdelrahman99999/Booting/blob/Delta_Patching_New/Docs/New%20BCM.png?raw=true" alt="BCM" hight =70% width=70% />
 </p>
 
 # TO DO 
+- [x] Bootloader
+- [x] BOOT Manager
+- [x] Normal update
 - [x] Silent Bootloader Updater
 - [x] Communicative Bootloader Updater
-- [ ] Delta patching update
-- [x] Normal update
-- [x] BOOT Manager
+- [x] Delta patching update for Application
 - [ ] SECURE BOOT
 - [ ] Doxygen Documentation
+
+

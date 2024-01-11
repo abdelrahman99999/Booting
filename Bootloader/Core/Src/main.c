@@ -26,8 +26,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "General_Config.h"
-#include "stm32f4xx_hal.h"
 #include "App_UTIL.h"
 /* USER CODE END Includes */
 
@@ -106,6 +104,7 @@ int main(void)
   while (1)
   {
 	  APP_Logic();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
