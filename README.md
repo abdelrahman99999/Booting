@@ -33,7 +33,7 @@ The goal is to reduce the number of bytes that are being delivered to:
 ![Delta](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Full_Image_VS_Delta.jpg?raw=true "Delta Update vs Full Image Update")
 ![Delta](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Full_Image_VS_Delta2.jpg?raw=true "Delta Update vs Full Image Update")
 ### Algorithm
-The used algorithm is JojoDiff, you can find more info about it <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/"  target="_blank" rel="noopener noreferrer" >here</a>
+The used algorithm is JojoDiff, you can find more info about it <a href="https://jojodiff.sourceforge.net/"  target="_blank" rel="noopener noreferrer" >here</a>
 
 
 # USED TOOLS
@@ -94,8 +94,9 @@ To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourcefo
 </p>
 
 ## Some References 
-- Bootloader Design for Microcontrollers in Embedded Systems <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/](https://www.beningo.com/insights/white-papers/bootloader-design-for-microcontrollers-in-embedded-systems/#"  target="_blank" rel="noopener noreferrer" >Link</a>
-- Tutorial: An SD card over SPI using STM32CubeIDE and FatFS <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/](https://01001000.xyz/2020-08-09-Tutorial-STM32CubeIDE-SD-card/"  target="_blank" rel="noopener noreferrer" >Link</a>
+- Bootloader Design for Microcontrollers in Embedded Systems <a href="https://www.beningo.com/insights/white-papers/bootloader-design-for-microcontrollers-in-embedded-systems/#"  target="_blank" rel="noopener noreferrer" >Link</a>
+- Tutorial: An SD card over SPI using STM32CubeIDE and FatFS <a href="https://01001000.xyz/2020-08-09-Tutorial-STM32CubeIDE-SD-card/"  target="_blank" rel="noopener noreferrer" >Link</a>
+- JojoDiff Alternative Patch library <a href="https://github.com/janjongboom/janpatch"  target="_blank" rel="noopener noreferrer" >Link</a>
 
 # TO DO 
 - [x] Bootloader
