@@ -289,7 +289,17 @@ static void Get_Version_Command_Handler(){
 static void Mem_Write_APP_Command_Handler(){
 	uint32_t app_size_length = atoi(&Bootloader_Rx_Buffer[2]);
 
-	HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42], app_size_length, HAL_MAX_DELAY);
+	//receiving application
+	//for now maximum received app will be 150000 bytes(same size of BOOTLOADER_RX_BUFFER_LENGTH)
+	if(app_size_length <(65535-42)){
+		HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42], app_size_length, HAL_MAX_DELAY);
+	}else{
+		uint32_t temp_app_size_length = app_size_length - 65535;
+
+		HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42], 65535, HAL_MAX_DELAY);
+		HAL_UART_Receive(&huart4, &Bootloader_Rx_Buffer[42+65535], temp_app_size_length, HAL_MAX_DELAY);
+	}
+
 	//writing app length
 	uint8_t result = Flash_Memory_Write(APP_NO_OF_BYTES_START_ADDRESS, (uint32_t *)&Bootloader_Rx_Buffer[2], 8);
 	//writing app digest
@@ -539,7 +549,6 @@ static uint8_t Flashing_Reconstructed_Image(const char *reconstruct_image_path) 
 #if (DELTA_PATCH_ENABLED == ENABLED)
 static void Bootloader_Delta_Patching_Handler(){
 
-
 	FATFS FatFs; 		//Fatfs handle
 	FRESULT fres; 		//Result after operations
 	//Open the file system
@@ -563,36 +572,45 @@ static void Bootloader_Delta_Patching_Handler(){
 	//reconstruct image
 	res += Reconstruct_Image_From_Delta("app.bin", "diff.bin", "reconstruct.bin", &Bootloader_Rx_Buffer[50], delta_image_length);
 	if(res == 0){
-		//flashing reconstruceted Image
+		FILINFO fno;
+		fres = f_stat ("reconstruct.bin",&fno );
+		//in case of success Reconstruction
+		if(fres == 0 && fno.fsize == reconstructed_image_length ){
+			//flashing reconstruceted Image
 			res = Flashing_Reconstructed_Image("reconstruct.bin");
 			if(res == 0) {
-
 				//delete old data files
 				fres =  f_unlink("app.bin");
 				fres +=  f_unlink("diff.bin");
 				//rename reconstruct to app to use it in next times
 				fres += f_rename("reconstruct.bin","app.bin");
 
-				//We're done, so de-mount the drive
-				fres +=f_mount(NULL, "", 0);
+
 
 				if(fres ==SUCCESS){
 					Last_written_image = 1;
-					 res = Flash_Memory_Write(APP_NO_OF_BYTES_START_ADDRESS, (uint32_t *)re_length, 8);
-					 res += Flash_Memory_Write(APP_Digest_START_ADDRESS, (uint32_t *)digest_, 32);
+					res = Flash_Memory_Write(APP_NO_OF_BYTES_START_ADDRESS, (uint32_t *)re_length, 8);
+					res += Flash_Memory_Write(APP_Digest_START_ADDRESS, (uint32_t *)digest_, 32);
 				}else{
 					Last_written_image = 0;
 				}
 				HAL_UART_Transmit(&huart4, &fres, 1, HAL_MAX_DELAY);
+				fres+=5;
 			} else {
 				HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
 			}
-
+		}
+		else{
+			res =1;
+			HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
+		}
 	}else{
 		res =1;
 		HAL_UART_Transmit(&huart4, &res, 1, HAL_MAX_DELAY);
 	}
 
+	//We're done, so de-mount the drive
+	fres =f_mount(NULL, "", 0);
 
 }
 
