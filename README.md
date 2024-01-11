@@ -1,25 +1,39 @@
 # Embedded SW Booting
-- Boot Manager
-- BootLoader
-- BootLoader Updater (Silent / Communicative)
-- Application
+- Boot Manager for controlling jumping to Bootloader or App/Bootloader Updater based on shared flags and some integrity checks
+- BootLoader for communicating with BCM to get App with both capabilities ( **Normal Update <sub>/</sub> Delta Update** ) 
+- BootLoader Updater ( **Silent <sub>/</sub> Communicative** ) for updating BootLoader
+- Application 
 # Design 
 ### Memory Design
 ![Design](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Memory%20Design.png?raw=true)
 ### Memory Constraints
 - Boot manager Maximum Size must be <= **12.5%** of the total flash size
 - BootLoader Maximum Size must be <= **18.75%** of the total flash size
-- Application or Bootloader Updater Maximum Size must be <= **68.75%** of the total flash size
+- Application or Bootloader Updater Maximum Size must be <= **68.75%** of the total flash size (***they share the same memory area***)
 
 # Releases
 
-### V_2.0.1 Design Flow
+### V_2.0.1 Design Flow and next Releases
 <p align="center">
   <img src="https://raw.githubusercontent.com/abdelrahman99999/Booting/5f804fc6b00bd211a19187b64c504239a5dcbb9d/Docs/Design_flow_v_2_0_1.svg" alt="Design flow"/>
 </p>
 
 ### V_1.0.0 Design Flow
 ![Design flow](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Design_flow_v_1_0_0.png?raw=true "V_1.0.0 Design Flow")
+
+
+# Delta Update Feature
+### The Goal
+The goal is to reduce the number of bytes that are being delivered to:
+- Reduce the download time – The new software needs to quickly get to the car’s gateway (e.g., head-unit) in order to start the update process
+- Decrease the amount of needed memory – After the new version is delivered, there needs to be room to store it before the update is started
+- Decrease the transport time between the gateway and the target ECU – In case of ECU update, the new version needs to go through the CAN/Ethernet bus, which is limited in bandwidth
+- Reduce the update time – The update time depends in some cases on the amount of changes that exist in the new version
+### Delta Update vs Full Image Update
+![Delta](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Full_Image_VS_Delta.jpg?raw=true "Delta Update vs Full Image Update")
+![Delta](https://github.com/abdelrahman99999/Booting/blob/main/Docs/Full_Image_VS_Delta2.jpg?raw=true "Delta Update vs Full Image Update")
+### Algorithm
+The used algorithm is JojoDiff, you can find more info about it <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/"  target="_blank" rel="noopener noreferrer" >here</a>
 
 
 # USED TOOLS
@@ -47,7 +61,7 @@
 - VCC
 - Common Ground
 
-## How to generate Patch File by WSL (Delta Patching Feature)
+## How to generate Patch File by WSL (Delta Update Feature)
 To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourceforge.net) or [JDiff.js](https://github.com/janjongboom/jdiff-js).
 
 1. Install a recent version of [Node.js](https://nodejs.org).
@@ -78,6 +92,10 @@ To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourcefo
 <p align="center">
 <img src="https://github.com/abdelrahman99999/Booting/blob/Delta_Patching_New/Docs/New%20BCM.png?raw=true" alt="BCM" hight =70% width=70% />
 </p>
+
+## Some References 
+- Bootloader Design for Microcontrollers in Embedded Systems <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/](https://www.beningo.com/insights/white-papers/bootloader-design-for-microcontrollers-in-embedded-systems/#"  target="_blank" rel="noopener noreferrer" >Link</a>
+- Tutorial: An SD card over SPI using STM32CubeIDE and FatFS <a href="https://www.youtube.com/channel/UCCxGkydKh5J-t3QurP2GRuA](https://jojodiff.sourceforge.net/](https://01001000.xyz/2020-08-09-Tutorial-STM32CubeIDE-SD-card/"  target="_blank" rel="noopener noreferrer" >Link</a>
 
 # TO DO 
 - [x] Bootloader
