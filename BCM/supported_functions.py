@@ -18,7 +18,7 @@ def init():
     port_needed =input()
 
     try:
-        ser = serial.Serial(port_needed, BAUDRATE ,timeout=5)
+        ser = serial.Serial(port_needed, BAUDRATE ,timeout=15)
     except:
         print("--An exception occurred, The port may be used by another process")
         exit()
@@ -238,7 +238,7 @@ def Execute_Delta_Patching_Command():
 
     ser.write(data_to_send)  
     ser.write(no_bytes_to_send.encode()) #delta
-    ser.write(no_bytes_reconstruceted.encode()) #reconstruct
+    ser.write(no_bytes_reconstruceted.encode()) #reconstructed
     ser.write(digest)
     time.sleep(0.07)
     no_bytes_sent = Write_Serial_Port(bytes_to_send)
@@ -252,9 +252,9 @@ def Execute_Delta_Patching_Command():
     time.sleep(0.1)
     data_received = ser.read(1)
     if(data_received[0] == 0):
-         print("Erase & Flash successfully")
+         print("successfull operation")
     else:
-         print("Erase & Flash failed")     
+         print("failed operation")     
 
 
 def Execute_Command(Command):

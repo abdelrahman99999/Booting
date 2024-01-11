@@ -1,8 +1,8 @@
 APP_NAME = "Examples\\application_green_blink.bin"
 BOOTLOADER_UPDATER_NAME ="Examples\\Communicative_Bootloader_Updater_v729.bin"
 BOOTLOADER_NAME = "Examples\\Bootloader_v123.bin"
-DELTA_FILE_NAME = "Examples\\diff2.bin" #diff1 green/red  #diff2 red/green
-APP_NAME_FOR_DELTA_PATCHING ="Examples\\application_green_blink.bin" #used to get it's digest and make sure that reconstruction of image is successfully correct
+DELTA_FILE_NAME = "Examples\\diff1.bin" #diff1 green/red  #diff2 red/green
+APP_NAME_FOR_DELTA_PATCHING ="Examples\\application_red_blink.bin" #used to get it's digest and make sure that reconstruction of image is successfully correct
 
 #Supported commands for bootloader
 BOOTLOADER_GET_VERION_COMMAND                          = 0
