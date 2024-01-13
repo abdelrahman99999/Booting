@@ -1,7 +1,11 @@
 .metadata/*
-Application/Debug/*
-Boot_Manager/Debug/*
-Bootloader/Debug/*
-Bootloader_Updater/Silent_Bootloader_Updater/Debug/*
-Bootloader_Updater/Communicative_Bootloader_Updater/Debug/*
+*.bin
+*.elf
+*.list
+*.map
+*.list
+!objects.list
+*.d
+*.o
+*.su
 *.pyc
