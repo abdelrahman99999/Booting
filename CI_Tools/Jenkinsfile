@@ -56,8 +56,8 @@ pipeline {
             script {
                 emailext (
                     to: '${DEFAULT_RECIPIENTS}',
-                    subject: "CI_Test - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
-                    body: """CI_Test - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
+                    subject: "Booting_Project_CI_Pipeline - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
+                    body: """Booting_Project_CI_Pipeline - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
 <br/>
 Check console <a href="${env.BUILD_URL}">output</a> to view full results.<br/>"""
                 )
@@ -67,8 +67,8 @@ Check console <a href="${env.BUILD_URL}">output</a> to view full results.<br/>""
             script {
                 emailext (
                     to: '${DEFAULT_RECIPIENTS}',
-                    subject: "CI_Test - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
-                    body: """CI_Test - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
+                    subject: "Booting_Project_CI_Pipeline - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
+                    body: """Booting_Project_CI_Pipeline - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
 <br/>
 Check console <a href="${env.BUILD_URL}">output</a> to view full results.<br/>"""
                 )
