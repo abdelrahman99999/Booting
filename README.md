@@ -105,7 +105,7 @@ To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourcefo
 - [x] Silent Bootloader Updater
 - [x] Communicative Bootloader Updater
 - [x] Delta patching update for Application
-- [ ] CI
+- [x] CI
 - [ ] SECURE BOOT
 - [ ] Doxygen Documentation
 
