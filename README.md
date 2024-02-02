@@ -10,7 +10,8 @@
 - Boot manager Maximum Size must be <= **12.5%** of the total flash size
 - BootLoader Maximum Size must be <= **18.75%** of the total flash size
 - Application or Bootloader Updater Maximum Size must be <= **68.75%** of the total flash size (***they share the same memory area***)
-
+# CI Pipeline with Jenkins
+![CI_Pipeline](https://github.com/abdelrahman99999/Booting/blob/main/Docs/CI_Pipeline.png?raw=true)
 # Releases
 
 ### V_2.0.1 Design Flow and next Releases
@@ -57,6 +58,8 @@ To generate patch files you'll need to build [JojoDiff](http://jojodiff.sourcefo
 - STM32 St-Link Utility
 - Ubuntu WSL
 - Python 3.10.8
+- Cppcheck
+- Jenkins
 ### HW TOOLS
 - STM32F439zi (Nucleo-144)
 - USB To TTL Module
