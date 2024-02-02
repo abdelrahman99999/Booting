@@ -60,8 +60,8 @@ all: main-build
 main-build: Application.elf secondary-outputs
 
 # Tool invocations
-Application.elf Application.map: $(OBJS) $(USER_OBJS) D:\New\ folder\Booting\Application\STM32F439ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Application.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\New folder\Booting\Application\STM32F439ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Application.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Application.elf Application.map: $(OBJS) $(USER_OBJS) ../STM32F439ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Application.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"../STM32F439ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Application.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

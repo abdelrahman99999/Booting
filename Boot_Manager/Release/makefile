@@ -57,6 +57,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 Boot_Manager.list \
 
+OBJCOPY_BIN += \
+Boot_Manager.bin \
+
 
 # All Target
 all: main-build
@@ -65,8 +68,8 @@ all: main-build
 main-build: Boot_Manager.elf secondary-outputs
 
 # Tool invocations
-Boot_Manager.elf Boot_Manager.map: $(OBJS) $(USER_OBJS) D:\New\ folder\Booting\Boot_Manager\STM32F439ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Boot_Manager.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\New folder\Booting\Boot_Manager\STM32F439ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Boot_Manager.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Boot_Manager.elf Boot_Manager.map: $(OBJS) $(USER_OBJS) ../STM32F439ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Boot_Manager.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"../STM32F439ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Boot_Manager.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -80,12 +83,17 @@ Boot_Manager.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+Boot_Manager.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Boot_Manager.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) Boot_Manager.elf Boot_Manager.list Boot_Manager.map default.size.stdout
+	-$(RM) Boot_Manager.bin Boot_Manager.elf Boot_Manager.list Boot_Manager.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
