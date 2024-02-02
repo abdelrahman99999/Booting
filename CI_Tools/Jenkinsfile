@@ -1,0 +1,78 @@
+pipeline {
+    agent any 
+
+    environment {
+        TOOL_DIR = "${WORKSPACE}\\CI_tools"
+		SN = "0669FF565282494867221521"
+    }
+
+    stages {
+        stage('Build BLM-BL-APP') { 
+            steps {
+                bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Boot_Manager\\Debug Debug all"
+                bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Boot_Manager\\Release Release all"
+				bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Bootloader\\Debug Debug all"
+                bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Bootloader\\Release Release all"
+				bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Application\\Debug Debug all"
+                bat "${TOOL_DIR}\\build.bat ${WORKSPACE}\\Application\\Release Release all"
+            }
+        }
+
+        stage('Static Code Analysis') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Boot_Manager"
+					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Bootloader"
+					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Application"
+                }
+            }
+        }
+
+        stage('Flash-Debug-Image') { 
+            steps {
+                bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Boot_Manager\\Debug\\Boot_Manager.bin 0x08000000"
+				bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Bootloader\\Debug\\Bootloader.bin 0x08040000"
+				bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Application\\Debug\\Application.bin 0x80A0200"
+            }
+        }
+
+        stage('Flash-Release-Image') { 
+            steps {
+                bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Boot_Manager\\Release\\Boot_Manager.bin 0x08000000"
+				bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Bootloader\\Release\\Bootloader.bin 0x08040000"
+				bat "${TOOL_DIR}\\flash.bat ${SN} ${WORKSPACE}\\Application\\Release\\Application.bin 0x80A0200"
+            }
+        }
+		stage('Reset MicroController') { 
+            steps {
+                bat "${TOOL_DIR}\\mcureset.bat ${SN}"
+            }
+        }
+
+    }
+
+    post {
+        success {
+            script {
+                emailext (
+                    to: '${DEFAULT_RECIPIENTS}',
+                    subject: "CI_Test - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
+                    body: """CI_Test - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
+<br/>
+Check console <a href="${env.BUILD_URL}">output</a> to view full results.<br/>"""
+                )
+            }
+        }
+        unsuccessful {
+            script {
+                emailext (
+                    to: '${DEFAULT_RECIPIENTS}',
+                    subject: "CI_Test - Build # ${env.BUILD_ID} - ${currentBuild.currentResult}!",
+                    body: """CI_Test - Build # <strong>${env.BUILD_ID}</strong> - ${currentBuild.currentResult}.<br/>
+<br/>
+Check console <a href="${env.BUILD_URL}">output</a> to view full results.<br/>"""
+                )
+            }
+        }
+    }
+}
