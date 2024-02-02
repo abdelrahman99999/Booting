@@ -21,9 +21,9 @@ pipeline {
         stage('Static Code Analysis') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Boot_Manager"
-					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Bootloader"
-					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Application"
+                    bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Boot_Manager\\Core"
+					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Bootloader\\Core"
+					bat "${TOOL_DIR}\\static-analysis.bat ${WORKSPACE}\\Application\\Core"
                 }
             }
         }
